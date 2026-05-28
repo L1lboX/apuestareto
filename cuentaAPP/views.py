@@ -12,7 +12,7 @@ from decimal import Decimal
 @login_required
 def wallet(request):
     # Obtain wallet with lock for display consistency (read-only)
-    wallet = Cuenta.objects.get(usuario=request.user, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
+    wallet, _ = Cuenta.objects.get_or_create(usuario=request.user, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
     movimientos = wallet.movimientos.select_related('cuenta').order_by('-fecha_movimiento')[:20]
     # Juego responsable limits
     juego = juegoResponsabe.objects.get(user=request.user)
@@ -34,8 +34,10 @@ def recargar(request):
                 raise ValueError('El monto debe ser positivo')
             with transaction.atomic():
                 # Lock rows
-                wallet = Cuenta.objects.select_for_update().get(usuario=request.user, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
-                casa = Cuenta.objects.select_for_update().get(usuario=None, tipo_cuenta=Cuenta.TipoCuenta.CASA)
+                wallet_instance, _ = Cuenta.objects.get_or_create(usuario=request.user, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
+                wallet = Cuenta.objects.select_for_update().get(id=wallet_instance.id)
+                casa_instance, _ = Cuenta.objects.get_or_create(usuario=None, tipo_cuenta=Cuenta.TipoCuenta.CASA)
+                casa = Cuenta.objects.select_for_update().get(id=casa_instance.id)
                 if LibroMayor.objects.filter(transaction_id=tx_id).exists():
                     messages.success(request, f'Recarga ya procesada (idempotente).')
                 else:
@@ -58,8 +60,10 @@ def retirar(request):
             if monto <= 0:
                 raise ValueError('El monto debe ser positivo')
             with transaction.atomic():
-                wallet = Cuenta.objects.select_for_update().get(usuario=request.user, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
-                casa = Cuenta.objects.select_for_update().get(usuario=None, tipo_cuenta=Cuenta.TipoCuenta.CASA)
+                wallet_instance, _ = Cuenta.objects.get_or_create(usuario=request.user, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
+                wallet = Cuenta.objects.select_for_update().get(id=wallet_instance.id)
+                casa_instance, _ = Cuenta.objects.get_or_create(usuario=None, tipo_cuenta=Cuenta.TipoCuenta.CASA)
+                casa = Cuenta.objects.select_for_update().get(id=casa_instance.id)
                 if wallet.saldo_actual < monto:
                     messages.error(request, 'Saldo insuficiente para retirar.')
                 elif LibroMayor.objects.filter(transaction_id=tx_id).exists():

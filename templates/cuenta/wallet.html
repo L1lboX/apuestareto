@@ -1,48 +1,457 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Mi Wallet</h1>
+<style>
+    .wallet-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
 
-<div class="card">
-    <h2>Saldo: S/ {{ wallet.saldo_actual }}</h2>
+    .wallet-header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-    <form method="post" action="{% url 'recargar' %}" style="margin-top:1rem">
-        {% csrf_token %}
-        <div class="form-group">
-            <label>Recargar fichas (simulado)</label>
-            <div style="display:flex; gap:0.5rem">
-                <input type="number" name="monto" step="0.0001" min="1"
-                       placeholder="Monto" required style="flex:1">
-                <button type="submit" class="btn btn-primary">Recargar</button>
-            </div>
+    .wallet-header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .wallet-header .balance {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #e94560;
+    }
+
+    .recharge-section {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .recharge-section h2 {
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        color: #333;
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .payment-method {
+        border: 2px solid #eef0f5;
+        border-radius: 10px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fafbfe;
+    }
+
+    .payment-method:hover {
+        border-color: #e94560;
+        background: #fff;
+        transform: translateY(-2px);
+    }
+
+    .payment-method.selected {
+        border-color: #e94560;
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(233, 69, 96, 0.15);
+    }
+
+    .payment-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .payment-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #444;
+    }
+
+    .payment-details {
+        background: #fbfbfd;
+        border: 1px solid #eef0f5;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: none;
+    }
+
+    .payment-details.active {
+        display: block;
+        animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .details-grid.full {
+        grid-template-columns: 1fr;
+    }
+
+    .details-group {
+        margin-bottom: 1rem;
+    }
+
+    .details-group label {
+        display: block;
+        font-size: 0.85rem;
+        color: #555;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+    }
+
+    .details-group input,
+    .details-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+    }
+
+    .details-group input:focus,
+    .details-group select:focus {
+        border-color: #e94560;
+        outline: none;
+    }
+
+    .qr-container {
+        text-align: center;
+        padding: 1rem;
+        background: #fff;
+        border-radius: 8px;
+        border: 2px dashed #ccc;
+    }
+
+    .amount-input-group {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .amount-input-group .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    .amount-input-group input {
+        border: 2px solid #e0e0e0;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .amount-input-group input:focus {
+        border-color: #e94560;
+    }
+
+    .btn-recharge {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        background: #e94560;
+        color: white;
+        border-radius: 8px;
+        transition: background 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-recharge:hover {
+        background: #c3334c;
+    }
+
+    .movements-section {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .movements-section h2 {
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+    }
+
+    .movements-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .movements-table th {
+        background: #f8f9fa;
+        color: #555;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border-bottom: 2px solid #eee;
+    }
+
+    .movements-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+
+    .movements-table tr:hover td {
+        background: #fafafa;
+    }
+
+    .type-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .type-credito {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .type-debito {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+
+<div class="wallet-container">
+
+    <!-- Balance Header -->
+    <div class="wallet-header">
+        <div>
+            <h1>Mi Wallet</h1>
+            <p style="color:#aaa;">Saldo Disponible</p>
         </div>
-    </form>
+        <div class="balance">
+            S/ {{ wallet.saldo_actual }}
+        </div>
+    </div>
+
+    <!-- Recharge Section -->
+    <div class="recharge-section">
+        <h2>Recargar Fichas (Simulado)</h2>
+
+        <form method="post" action="{% url 'recargar' %}" id="rechargeForm">
+            {% csrf_token %}
+
+            <p style="margin-bottom: 1rem; font-size: 0.95rem; color: #666;">1. Elige un método de pago</p>
+            <div class="payment-methods">
+                <div class="payment-method selected" onclick="selectPayment(this, 'tarjeta')">
+                    <span class="payment-icon">💳</span>
+                    <span class="payment-name">Tarjeta Crédito</span>
+                </div>
+                <div class="payment-method" onclick="selectPayment(this, 'yape')">
+                    <span class="payment-icon">📱</span>
+                    <span class="payment-name">Yape / Plin</span>
+                </div>
+                <div class="payment-method" onclick="selectPayment(this, 'banco')">
+                    <span class="payment-icon">🏦</span>
+                    <span class="payment-name">Transferencia</span>
+                </div>
+                <div class="payment-method" onclick="selectPayment(this, 'cripto')">
+                    <span class="payment-icon">🪙</span>
+                    <span class="payment-name">Cripto</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Fields -->
+            <div id="details-tarjeta" class="payment-details active">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Datos de la Tarjeta</h3>
+                <div class="details-group">
+                    <label>Número de Tarjeta</label>
+                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                </div>
+                <div class="details-grid">
+                    <div class="details-group">
+                        <label>Vencimiento (MM/AA)</label>
+                        <input type="text" placeholder="MM/AA" maxlength="5" required>
+                    </div>
+                    <div class="details-group">
+                        <label>CVV</label>
+                        <input type="text" placeholder="123" maxlength="4" required>
+                    </div>
+                </div>
+                <div class="details-group" style="margin-bottom: 0;">
+                    <label>Nombre del Titular</label>
+                    <input type="text" placeholder="Como aparece en la tarjeta" required>
+                </div>
+            </div>
+
+            <div id="details-yape" class="payment-details">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Pago con Billetera Digital</h3>
+                <div class="details-grid full">
+                    <div class="details-group">
+                        <label>Número de celular asociado</label>
+                        <input type="tel" placeholder="999 999 999" maxlength="9">
+                    </div>
+                </div>
+                <div class="qr-container">
+                    <svg style="width: 80px; height: 80px; color: #666; margin: 0 auto;" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem;">Escanea desde tu app de Yape o Plin
+                    </p>
+                </div>
+            </div>
+
+            <div id="details-banco" class="payment-details">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Transferencia Bancaria</h3>
+                <div class="details-group">
+                    <label>Banco Origen</label>
+                    <select>
+                        <option>BCP</option>
+                        <option>BBVA</option>
+                        <option>Interbank</option>
+                        <option>Scotiabank</option>
+                    </select>
+                </div>
+                <div class="details-group">
+                    <label>Número de Operación (Opcional)</label>
+                    <input type="text" placeholder="Ej. 12345678">
+                </div>
+                <p
+                    style="font-size:0.85rem; color:#666; margin-top:1rem; padding: 0.5rem; background:#fff; border: 1px dashed #ccc; border-radius:4px;">
+                    Transfiere a nuestra cuenta: <strong style="color:black;">193-1234567-0-01 (BCP)</strong></p>
+            </div>
+
+            <div id="details-cripto" class="payment-details">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Pago en Criptomonedas</h3>
+                <div class="details-group">
+                    <label>Red a utilizar</label>
+                    <select>
+                        <option>USDT (Red TRC20)</option>
+                        <option>USDT (Red ERC20)</option>
+                        <option>Bitcoin (BTC)</option>
+                    </select>
+                </div>
+                <div class="details-group" style="margin-bottom:0;">
+                    <label>Dirección de destino</label>
+                    <input type="text" value="TSimul4tedCryp7oWAllEtAddr3ssH3rE" readonly
+                        style="background:#efefef; color:#666; cursor:default;">
+                </div>
+            </div>
+
+            <p style="margin-bottom: 0.5rem; font-size: 0.95rem; color: #666;">2. Ingresa el monto a recargar</p>
+            <div class="amount-input-group">
+                <div class="form-group">
+                    <input type="number" name="monto" step="0.01" min="1" placeholder="S/ 0.00" required>
+                </div>
+                <button type="submit" class="btn btn-recharge">Procesar Recarga</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Movements Section -->
+    <div class="movements-section">
+        <h2>Últimos movimientos</h2>
+        {% if movimientos %}
+        <div style="overflow-x: auto;">
+            <table class="movements-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Monto</th>
+                        <th>Transacción ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movimientos %}
+                    <tr>
+                        <td style="color:#666; font-size:0.9rem;">{{ m.fecha_movimiento|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if m.tipo_movimiento == 'credito' %}
+                            <span class="type-badge type-credito">+ Crédito</span>
+                            {% else %}
+                            <span class="type-badge type-debito">- Débito</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-weight:bold; color:#333;">S/ {{ m.monto }}</td>
+                        <td style="font-size:0.8rem; color:#888; font-family:monospace;">{{ m.transaction_id }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding: 2rem; color: #888;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                style="width:48px; height:48px; margin:0 auto 1rem; opacity:0.5;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>No hay movimientos registrados en tu wallet.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
-<h2 style="margin-top:2rem">Últimos movimientos</h2>
+<script>
+    function selectPayment(element, method) {
+        // Deselect all
+        document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+        // Hide all details
+        document.querySelectorAll('.payment-details').forEach(el => el.classList.remove('active'));
+        // Remove required constraints from all floating inputs
+        document.querySelectorAll('.payment-details input:not([readonly])').forEach(el => el.removeAttribute('required'));
 
-{% if movimientos %}
-<table>
-    <thead>
-        <tr>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Transacción</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for m in movimientos %}
-        <tr>
-            <td>{{ m.fecha_movimiento|date:"d/m/y H:i" }}</td>
-            <td>{{ m.get_tipo_movimiento_display }}</td>
-            <td>S/ {{ m.monto }}</td>
-            <td style="font-size:0.75rem">{{ m.transaction_id }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-    <p>No hay movimientos registrados.</p>
-{% endif %}
+        // Select chosen one
+        element.classList.add('selected');
+        // Show corresponding details
+        const detailsDiv = document.getElementById('details-' + method);
+        if (detailsDiv) {
+            detailsDiv.classList.add('active');
+            // Add require constraint to the visible inputs
+            detailsDiv.querySelectorAll('input:not([readonly])').forEach(el => el.setAttribute('required', 'required'));
+        }
+    }
+
+    // Initialize the default selection rules on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const activeMethod = document.querySelector('.payment-details.active');
+        if (activeMethod) {
+            activeMethod.querySelectorAll('input:not([readonly])').forEach(el => el.setAttribute('required', 'required'));
+        }
+    });
+</script>
 {% endblock %}
