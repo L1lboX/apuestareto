@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Mi Wallet</h1>
+
+<div class="card">
+    <h2>Saldo: S/ {{ wallet.saldo_actual }}</h2>
+
+    <form method="post" action="{% url 'recargar' %}" style="margin-top:1rem">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Recargar fichas (simulado)</label>
+            <div style="display:flex; gap:0.5rem">
+                <input type="number" name="monto" step="0.0001" min="1"
+                       placeholder="Monto" required style="flex:1">
+                <button type="submit" class="btn btn-primary">Recargar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<h2 style="margin-top:2rem">Últimos movimientos</h2>
+
+{% if movimientos %}
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Transacción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in movimientos %}
+        <tr>
+            <td>{{ m.fecha_movimiento|date:"d/m/y H:i" }}</td>
+            <td>{{ m.get_tipo_movimiento_display }}</td>
+            <td>S/ {{ m.monto }}</td>
+            <td style="font-size:0.75rem">{{ m.transaction_id }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>No hay movimientos registrados.</p>
+{% endif %}
+{% endblock %}

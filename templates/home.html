@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Eventos disponibles</h1>
+
+{% if eventos %}
+    {% for evento in eventos %}
+    <div class="card">
+        <h3>{{ evento.local }} vs {{ evento.visitante }}</h3>
+        <p>{{ evento.fecha_inicio|date:"d M Y H:i" }} — {{ evento.get_estado_display }}</p>
+        <a href="{% url 'evento_detalle' evento.pk %}" class="btn btn-primary">Ver cuotas</a>
+    </div>
+    {% endfor %}
+{% else %}
+    <p>No hay eventos disponibles en este momento.</p>
+{% endif %}
+{% endblock %}

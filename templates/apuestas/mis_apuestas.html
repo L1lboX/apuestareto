@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Mis Apuestas</h1>
+
+{% if apuestas %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Cuota</th>
+            <th>Ganancia Pot.</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for apuesta in apuestas %}
+        <tr>
+            <td>{{ apuesta.id }}</td>
+            <td>{{ apuesta.fecha_apuesta|date:"d/m/y H:i" }}</td>
+            <td>{{ apuesta.get_tipo_display }}</td>
+            <td>S/ {{ apuesta.monto_apostado }}</td>
+            <td>{{ apuesta.cuota_total }}</td>
+            <td>S/ {{ apuesta.ganancia_potencial }}</td>
+            <td>{{ apuesta.get_estado_display }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>No tienes apuestas realizadas.</p>
+    <a href="{% url 'evento_lista' %}" class="btn btn-primary">Ver eventos</a>
+{% endif %}
+{% endblock %}

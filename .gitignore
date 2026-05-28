@@ -1,0 +1,10 @@
+# .gitignore
+.env
+venv/
+env/
+__pycache__/
+*.pyc
+db.sqlite3
+.DS_Store
+ANALISIS_PROYECTO.md
+pdf_output.txt

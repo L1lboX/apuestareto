@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Registro</h1>
+
+<div class="card" style="max-width:500px; margin:0 auto">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Email</label>
+            {{ form.email }}
+        </div>
+        <div class="form-group">
+            <label>Usuario</label>
+            {{ form.username }}
+        </div>
+        <div class="form-group">
+            <label>Nombre</label>
+            {{ form.nombre }}
+        </div>
+        <div class="form-group">
+            <label>Apellido</label>
+            {{ form.apellido }}
+        </div>
+        <div class="form-group">
+            <label>Teléfono</label>
+            {{ form.telefono }}
+        </div>
+        <div class="form-group">
+            <label>DNI</label>
+            {{ form.dni }}
+        </div>
+        <div class="form-group">
+            <label>Fecha de nacimiento</label>
+            {{ form.fecha_nacimiento }}
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            {{ form.password1 }}
+        </div>
+        <div class="form-group">
+            <label>Confirmar contraseña</label>
+            {{ form.password2 }}
+        </div>
+        <button type="submit" class="btn btn-primary">Registrarse</button>
+    </form>
+
+    {% if form.errors %}
+    <div style="color:red; margin-top:1rem">
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <p style="margin-top:1rem">¿Ya tienes cuenta? <a href="{% url 'login' %}">Ingresa</a></p>
+</div>
+{% endblock %}

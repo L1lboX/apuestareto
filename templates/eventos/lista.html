@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Eventos</h1>
+
+{% if eventos %}
+<table>
+    <thead>
+        <tr>
+            <th>Local</th>
+            <th>Visitante</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for evento in eventos %}
+        <tr>
+            <td>{{ evento.local }}</td>
+            <td>{{ evento.visitante }}</td>
+            <td>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}</td>
+            <td>{{ evento.get_estado_display }}</td>
+            <td><a href="{% url 'evento_detalle' evento.pk %}" class="btn btn-primary">Ver</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>No hay eventos programados.</p>
+{% endif %}
+{% endblock %}

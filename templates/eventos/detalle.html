@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ evento.local }} vs {{ evento.visitante }}</h1>
+<p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }} — {{ evento.get_estado_display }}</p>
+
+{% for mercado in mercados %}
+<div class="card" style="margin-top:1rem">
+    <h3>{{ mercado.get_tipo_display }}</h3>
+    <p>Margen operador: {{ mercado.margen_operador }}%</p>
+
+    <table>
+        <thead>
+            <tr><th>Selección</th><th>Cuota</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for sel in selecciones %}
+                {% if sel.mercado_id == mercado.id %}
+                <tr>
+                    <td>{{ sel.get_tipo_display }}</td>
+                    <td>{{ sel.cuota }}</td>
+                    <td>
+                        <a href="{% url 'hacer_apuesta' seleccion_id=sel.id %}" class="btn btn-primary">Apostar</a>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% empty %}
+    <p>No hay mercados activos para este evento.</p>
+{% endfor %}
+
+<a href="{% url 'evento_lista' %}" class="btn btn-secondary" style="margin-top:1rem">← Volver</a>
+{% endblock %}
