@@ -27,7 +27,7 @@ def wallet(request):
 def recargar(request):
     if request.method == 'POST':
         monto_str = request.POST.get('monto')
-        tx_id = request.POST.get('transaction_id')
+        tx_id = request.POST.get('transaction_id') or str(uuid.uuid4())
         try:
             monto = Decimal(monto_str)
             if monto <= 0:
@@ -36,7 +36,6 @@ def recargar(request):
                 # Lock rows
                 wallet = Cuenta.objects.select_for_update().get(usuario=request.user, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
                 casa = Cuenta.objects.select_for_update().get(usuario=None, tipo_cuenta=Cuenta.TipoCuenta.CASA)
-                # Idempotency check
                 if LibroMayor.objects.filter(transaction_id=tx_id).exists():
                     messages.success(request, f'Recarga ya procesada (idempotente).')
                 else:
@@ -53,7 +52,7 @@ def recargar(request):
 def retirar(request):
     if request.method == 'POST':
         monto_str = request.POST.get('monto')
-        tx_id = request.POST.get('transaction_id')
+        tx_id = request.POST.get('transaction_id') or str(uuid.uuid4())
         try:
             monto = Decimal(monto_str)
             if monto <= 0:
@@ -63,13 +62,12 @@ def retirar(request):
                 casa = Cuenta.objects.select_for_update().get(usuario=None, tipo_cuenta=Cuenta.TipoCuenta.CASA)
                 if wallet.saldo_actual < monto:
                     messages.error(request, 'Saldo insuficiente para retirar.')
+                elif LibroMayor.objects.filter(transaction_id=tx_id).exists():
+                    messages.success(request, 'Retiro ya procesado (idempotente).')
                 else:
-                    if LibroMayor.objects.filter(transaction_id=tx_id).exists():
-                        messages.success(request, 'Retiro ya procesado (idempotente).')
-                    else:
-                        LibroMayor.objects.create(cuenta=wallet, tipo_movimiento=LibroMayor.TipoMovimiento.Debito, monto=monto, transaction_id=tx_id)
-                        LibroMayor.objects.create(cuenta=casa, tipo_movimiento=LibroMayor.TipoMovimiento.Credito, monto=monto, transaction_id=tx_id)
-                        messages.success(request, f'Retiro de S/ {monto} exitoso.')
+                    LibroMayor.objects.create(cuenta=wallet, tipo_movimiento=LibroMayor.TipoMovimiento.Debito, monto=monto, transaction_id=tx_id)
+                    LibroMayor.objects.create(cuenta=casa, tipo_movimiento=LibroMayor.TipoMovimiento.Credito, monto=monto, transaction_id=tx_id)
+                    messages.success(request, f'Retiro de S/ {monto} exitoso.')
         except Exception as e:
             messages.error(request, f'Error al procesar el retiro: {e}')
         return redirect('wallet')

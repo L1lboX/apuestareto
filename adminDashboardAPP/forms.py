@@ -7,7 +7,7 @@ from eventoAPP.models import Evento, Mercado, Seleccion
 class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
-        fields = ['local', 'visitante', 'fecha_inicio', 'estado']
+        fields = ['local', 'visitante', 'fecha_inicio']
         widgets = {
             'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'input'}),
         }

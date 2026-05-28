@@ -108,6 +108,75 @@
             background: rgba(0,0,0,0.2);
             color: #fff;
         }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 520px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .modal .close-btn {
+            position: absolute;
+            top: 1rem; right: 1.2rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal .close-btn:hover { color: var(--primary); }
+        .modal .form-group {
+            margin-bottom: 1rem;
+        }
+        .modal .form-group label {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .modal .form-group input,
+        .modal .form-group select {
+            width: 100%;
+            padding: 0.65rem 0.8rem;
+        }
+        .modal .cuotas-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+        .modal .btn-full {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .modal .errorlist {
+            color: var(--primary);
+            font-size: 0.8rem;
+            list-style: none;
+            padding: 0;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>

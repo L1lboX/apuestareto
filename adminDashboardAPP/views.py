@@ -264,23 +264,26 @@ def vista_usuario_apuestas(request, usuario_id):
 def crear_evento(request):
     if request.method == 'POST':
         evento_form = EventoForm(request.POST)
-        if evento_form.is_valid():
+        cuota_1 = request.POST.get('cuota_1', '').strip()
+        cuota_X = request.POST.get('cuota_X', '').strip()
+        cuota_2 = request.POST.get('cuota_2', '').strip()
+        cuotas_ok = all(cuota_1 and cuota_X and cuota_2)
+        if not cuotas_ok:
+            messages.error(request, 'Debe ingresar las tres cuotas (1, X, 2).')
+        if evento_form.is_valid() and cuotas_ok:
             evento = evento_form.save(commit=False)
-            # Estado por defecto PROGRAMADO ya está en modelo
             evento.save()
-            # Crear mercado 1X2 asociado al evento
             from eventoAPP.models import Mercado, Seleccion
             mercado = Mercado.objects.create(evento=evento, tipo=Mercado.TipoMercado.RESULTADO_FINAL)
-            # Crear selecciones 1, X, 2 con cuotas enviadas en POST
-            cuotas = {
-                '1': request.POST.get('cuota_1'),
-                'X': request.POST.get('cuota_X'),
-                '2': request.POST.get('cuota_2'),
-            }
+            cuotas = {'1': cuota_1, 'X': cuota_X, '2': cuota_2}
             for tipo, cuota in cuotas.items():
-                if cuota:
-                    Seleccion.objects.create(mercado=mercado, tipo=tipo, cuota=cuota)
+                Seleccion.objects.create(mercado=mercado, tipo=tipo, cuota=cuota)
             messages.success(request, 'Evento creado correctamente')
+            return redirect('admin_dashboard:eventos_control')
+        else:
+            for field, errors in evento_form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
             return redirect('admin_dashboard:eventos_control')
     else:
         evento_form = EventoForm()
