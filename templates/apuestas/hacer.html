@@ -1,28 +1,247 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Realizar apuesta</h1>
+<style>
+    .bet-container {
+        max-width: 500px;
+        margin: 2rem auto;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
 
-<div class="card" style="max-width:450px; margin:0 auto">
-    <h3>{{ evento.local }} vs {{ evento.visitante }}</h3>
-    <p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}</p>
-    <p>Seleccion: <strong>{{ seleccion.get_tipo_display }}</strong> — Cuota: <strong>{{ seleccion.cuota }}</strong></p>
+    .bet-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
 
-    <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="transaction_id" id="transaction_id">
-        <div class="form-group">
-            <label>Monto a apostar (S/ 1.00 - S/ 10,000.00)</label>
-            <input type="number" name="monto" step="0.0001" min="1" max="10000" required
-                   placeholder="Ej: 100.00">
+    .bet-header h1 {
+        font-size: 1.8rem;
+        color: #1a1a2e;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .bet-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+        padding: 2.5rem 2rem;
+        border-top: 4px solid #e94560;
+    }
+
+    .event-info {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px dashed #eef0f5;
+    }
+
+    .event-teams {
+        font-size: 1.4rem;
+        color: #111;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .event-date {
+        display: inline-block;
+        background: #f1f3f5;
+        color: #667085;
+        padding: 0.4rem 0.9rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .selection-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fafbfe;
+        border: 2px solid #eef0f5;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .selection-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .selection-label {
+        font-size: 0.85rem;
+        color: #667085;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+    }
+
+    .selection-name {
+        font-size: 1.1rem;
+        color: #1f2937;
+        font-weight: 800;
+    }
+
+    .selection-odd-box {
+        background: #e94560;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 800;
+        font-size: 1.25rem;
+        box-shadow: 0 4px 10px rgba(233, 69, 96, 0.2);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #4b5563;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .limit-label {
+        color: #9ca3af;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .amount-input-wrapper {
+        position: relative;
+    }
+
+    .amount-input-wrapper span {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        font-weight: 700;
+    }
+
+    .amount-input-wrapper input {
+        width: 100%;
+        padding: 0.9rem 1rem 0.9rem 2.5rem;
+        border: 2px solid #eef0f5;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        transition: all 0.2s;
+    }
+
+    .amount-input-wrapper input:focus {
+        border-color: #e94560;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+    }
+
+    .potential-gain {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .potential-gain-label {
+        color: #166534;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .potential-gain-value {
+        color: #15803d;
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+
+    .btn-submit {
+        width: 100%;
+        background: #e94560;
+        color: #fff;
+        border: none;
+        padding: 1rem;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-submit:hover {
+        background: #d03d55;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(233, 69, 96, 0.25);
+    }
+</style>
+
+<div class="bet-container">
+    <div class="bet-header">
+        <h1>Realizar Apuesta</h1>
+        <p style="color: #667085;">Confirma los detalles de tu ticket</p>
+    </div>
+
+    <div class="bet-card">
+        <div class="event-info">
+            <div class="event-teams">{{ evento.local }} vs {{ evento.visitante }}</div>
+            <div class="event-date">
+                <svg style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 4px; margin-top: -2px;"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {{ evento.fecha_inicio|date:"d/m/Y H:i" }}
+            </div>
         </div>
-        <div class="form-group">
-            <p style="font-size:0.85rem; color:#666">
-                Ganancia potencial: <strong id="ganancia">--</strong>
-            </p>
+
+        <div class="selection-box">
+            <div class="selection-details">
+                <span class="selection-label">Tu Selección</span>
+                <span class="selection-name">{{ seleccion.get_tipo_display }}</span>
+            </div>
+            <div class="selection-odd-box">
+                {{ seleccion.cuota }}
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Confirmar apuesta</button>
-    </form>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="transaction_id" id="transaction_id">
+
+            <div class="form-group">
+                <label>
+                    <span>Monto a apostar</span>
+                    <span class="limit-label">S/ 1.00 - S/ 10,000.00</span>
+                </label>
+                <div class="amount-input-wrapper">
+                    <span>S/</span>
+                    <input type="number" name="monto" step="0.01" min="1" max="10000" required placeholder="0.00"
+                        id="monto_input" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="potential-gain">
+                <span class="potential-gain-label">Ganancia Potencial</span>
+                <span class="potential-gain-value" id="ganancia">S/ 0.00</span>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                Confirmar Apuesta
+            </button>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -32,10 +251,23 @@
         document.getElementById('transaction_id').value = 'tx-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
     }
 
-    document.querySelector('input[name="monto"]').addEventListener('input', function() {
+    const inputMonto = document.getElementById('monto_input');
+    const displayGanancia = document.getElementById('ganancia');
+
+    // Parse quota safely
+    const cuotaStr = "{{ seleccion.cuota }}".replace(',', '.');
+    const cuota = parseFloat(cuotaStr) || 1.00;
+
+    inputMonto.addEventListener('input', function () {
         const monto = parseFloat(this.value) || 0;
-        const cuota = {{ seleccion.cuota|stringformat:".2f" }};
-        document.getElementById('ganancia').textContent = 'S/ ' + (monto * cuota).toFixed(2);
+        if (monto > 0) {
+            displayGanancia.textContent = 'S/ ' + (monto * cuota).toFixed(2);
+        } else {
+            displayGanancia.textContent = 'S/ 0.00';
+        }
     });
+
+    // Fire immediately to catch cached inputs (browser back button)
+    inputMonto.dispatchEvent(new Event('input'));
 </script>
 {% endblock %}
