@@ -41,6 +41,11 @@
     .register-card > p { margin: 0 0 2rem; color: #666; font-size: 1rem; }
     .register-card hr { border: none; height: 3px; width: 40px; background: #F13554; margin: 0 0 2rem 0; border-radius: 3px; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .dni-labels, .dni-fields { display: grid; grid-template-columns: minmax(0, 1fr) 76px; gap: 0.75rem; }
+    .dni-labels label { margin-bottom: 0.5rem; }
+    .dni-labels label:last-child { font-size: 0.74rem; text-align: center; white-space: nowrap; }
+    .dni-check-wrapper input { padding: 0.85rem 0.45rem; text-align: center; }
+    .dni-check-wrapper::before { display: none; }
     .date-group { margin-bottom: 1rem; }
     .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #333; margin-bottom: 0.5rem; }
     .input-wrapper { position: relative; }
@@ -203,9 +208,15 @@
                         <label>Teléfono</label>
                         <div class="input-wrapper phone-icon">{{ form.telefono }}</div>
                     </div>
-                    <div class="input-group">
-                        <label>DNI</label>
-                        <div class="input-wrapper id-icon">{{ form.dni }}</div>
+                    <div class="input-group dni-group">
+                        <div class="dni-labels">
+                            <label>DNI</label>
+                            <label>Dígito verif.</label>
+                        </div>
+                        <div class="dni-fields">
+                            <div class="input-wrapper id-icon">{{ form.dni }}</div>
+                            <div class="input-wrapper dni-check-wrapper">{{ form.dni_digito_verificador }}</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -257,6 +268,7 @@
         const a = document.querySelector('input[name="apellido"]'); if(a) a.placeholder = "Tu apellido";
         const t = document.querySelector('input[name="telefono"]'); if(t) t.placeholder = "Ej: 987 654 321";
         const d = document.querySelector('input[name="dni"]'); if(d) d.placeholder = "Ej: 12345678";
+        const dv = document.querySelector('input[name="dni_digito_verificador"]'); if(dv) dv.placeholder = "0";
         const f = document.querySelector('input[name="fecha_nacimiento"]'); if(f) { f.placeholder = "dd / mm / aaaa"; f.type = "date"; f.style.color = "#777"; }
         const p1 = document.querySelector('input[name="password1"]'); if(p1) p1.placeholder = "Crea una contraseña";
         const p2 = document.querySelector('input[name="password2"]'); if(p2) p2.placeholder = "Repite tu contraseña";

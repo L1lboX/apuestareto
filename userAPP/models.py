@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.conf import settings
 from django.utils import timezone
 
@@ -26,6 +27,17 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, max_length=255)
     telefono = models.CharField(max_length=9)
     dni = models.CharField(max_length=9, unique=True)
+    dni_digito_verificador = models.CharField(
+        "digito verificador DNI",
+        max_length=1,
+        default='',
+        validators=[
+            RegexValidator(
+                regex=r'^\d$',
+                message="El digito verificador debe ser un numero del 0 al 9."
+            )
+        ],
+    )
 
     fecha_nacimiento = models.DateField(
         validators=[validar_edad],
@@ -34,7 +46,7 @@ class User(AbstractUser):
     estado = models.CharField(max_length=30, choices=EstadoUser.choices, default=EstadoUser.PENDIENTE)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'nombre', 'apellido', 'telefono', 'dni']
+    REQUIRED_FIELDS = ['username', 'nombre', 'apellido', 'telefono', 'dni', 'dni_digito_verificador']
 
     def __str__(self):
         return f"{self.email} - {self.get_estado_display()}"
