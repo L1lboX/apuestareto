@@ -1,0 +1,57 @@
+{% extends 'admin_dashboard/base_admin.html' %}
+
+{% block content %}
+<div class="header">
+    <h1>Dashboard Principal</h1>
+    <div>
+        <form action="{% url 'reporte_csv' %}" method="get" style="display:inline-flex; gap:10px;">
+            <input type="month" name="mes" class="form-input" required>
+            <button type="submit" class="btn">Exportar CSV</button>
+        </form>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="card">
+        <h3 style="color:var(--text-muted); font-size:0.9rem;">GGR Total</h3>
+        <h2 style="font-size:2rem; margin-top:0.5rem; color:var(--primary)">S/ {{ ggr|floatformat:2 }}</h2>
+    </div>
+    <div class="card">
+        <h3 style="color:var(--text-muted); font-size:0.9rem;">Volumen Hoy</h3>
+        <h2 style="font-size:2rem; margin-top:0.5rem;">S/ {{ volumen_hoy|floatformat:2 }}</h2>
+    </div>
+    <div class="card">
+        <h3 style="color:var(--text-muted); font-size:0.9rem;">Apuestas Activas</h3>
+        <h2 style="font-size:2rem; margin-top:0.5rem;">{{ apuestas_activas }}</h2>
+    </div>
+    <div class="card">
+        <h3 style="color:var(--text-muted); font-size:0.9rem;">Nuevos Usuarios Hoy</h3>
+        <h2 style="font-size:2rem; margin-top:0.5rem;">{{ usuarios_hoy }}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Top Exposure (Apuestas Pendientes)</h2>
+    <p style="color:var(--text-muted); margin-bottom:1rem; font-size:0.9rem;">Cuánto pierde la casa si gana esta selección.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Selección</th>
+                <th>Exposure Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in exposure_list %}
+            <tr>
+                <td>{{ item.seleccion__mercado__evento__local }} vs {{ item.seleccion__mercado__evento__visitante }}</td>
+                <td>{{ item.seleccion__tipo }}</td>
+                <td style="color:var(--primary); font-weight:600;">S/ {{ item.total_exposure|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3">No hay exposure activo.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

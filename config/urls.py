@@ -17,10 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+admin.site.site_header = 'Administración de Apuestas'
+admin.site.site_title = 'Panel de Control'
+admin.site.index_title = 'Gestión del Sistema'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('coreAPP.urls')),
     path('eventos/', include('eventoAPP.urls')),
     path('apuestas/', include('apuestaAPP.urls')),
     path('cuenta/', include('cuentaAPP.urls')),
+    path('admin-dashboard/', include('adminDashboardAPP.urls')),
 ]

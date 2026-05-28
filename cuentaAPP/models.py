@@ -6,9 +6,10 @@ from decimal import Decimal
 
 class Cuenta(models.Model):
     class TipoCuenta(models.TextChoices):
-       Casa = 'casa', 'Cuenta de Casa'
-       Pendiente = 'pendiente', 'Apuestas Pendientes'
-       Wallet = 'wallet', 'Cuenta de usuario'
+        WALLET_USUARIO = 'wallet_usuario', 'Wallet de Usuario'
+        CASA = 'casa', 'Cuenta de la Casa'
+        APUESTAS_PENDIENTES = 'apuestas_pendientes', 'Apuestas Pendientes'
+        BONOS = 'bonos', 'Bonos'
 
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -36,10 +37,7 @@ class LibroMayor(models.Model):
 
     cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='movimientos')
     tipo_movimiento = models.CharField(max_length=10, choices=TipoMovimiento.choices)
-    monto = models.DecimalField(max_digits=10, decimal_places=4)
+    monto = models.DecimalField(max_digits=18, decimal_places=4)
     fecha_movimiento = models.DateTimeField(auto_now_add=True)
-    transaction_id = models.UUIDField(
-        default=uuid.uuid4,
-        editable=False
-    )
+    transaction_id = models.CharField(max_length=100, db_index=True)
        

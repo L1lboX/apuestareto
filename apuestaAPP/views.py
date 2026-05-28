@@ -14,9 +14,11 @@ def hacer_apuesta(request, seleccion_id):
     if request.method == 'POST':
         try:
             monto = request.POST.get('monto')
+            import uuid
             from decimal import Decimal
             monto = Decimal(monto)
-            crear_apuesta(request.user, monto, [seleccion.id])
+            tx_id = request.POST.get('transaction_id') or str(uuid.uuid4())
+            crear_apuesta(request.user, monto, [seleccion.id], tx_id)
             messages.success(request, 'Apuesta realizada con exito.')
             return redirect('mis_apuestas')
         except ValueError as e:

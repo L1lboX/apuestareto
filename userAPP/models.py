@@ -50,6 +50,13 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.email} - {self.get_estado_display()}"
+
+    @property
+    def juegoResponsabe(self):
+        try:
+            return self.juegoresponsabe
+        except juegoResponsabe.DoesNotExist:
+            return None
     
     def save(self, *args, **kwargs):
         nuevo = self.pk is None
@@ -60,10 +67,11 @@ class User(AbstractUser):
 
             juegoResponsabe.objects.create(user=self)
 
-            Cuenta.objects.create(
-                usuario = self,
-                tipo_cuenta = Cuenta.TipoCuenta.Wallet
-            )
+            for tipo in Cuenta.TipoCuenta.values:
+                Cuenta.objects.create(
+                    usuario=self,
+                    tipo_cuenta=tipo
+                )
 
 
     

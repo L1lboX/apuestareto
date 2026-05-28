@@ -1,0 +1,54 @@
+{% extends 'admin_dashboard/base_admin.html' %}
+
+{% block content %}
+<div class="header">
+    <h1>Control de Eventos y Liquidación</h1>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Fecha</th>
+                <th>Estado Actual</th>
+                <th>Acción (Finalizar y Liquidar)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for evento in eventos %}
+            <tr>
+                <td>{{ evento.local }} vs {{ evento.visitante }}</td>
+                <td>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <span style="padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; background: rgba(255,255,255,0.1);">
+                        {{ evento.get_estado_display }}
+                    </span>
+                </td>
+                <td>
+                    {% if evento.estado == 'programado' or evento.estado == 'en_vivo' %}
+                    <form method="post" style="display:flex; gap:0.5rem; align-items:center;">
+                        {% csrf_token %}
+                        <input type="hidden" name="evento_id" value="{{ evento.id }}">
+                        <input type="hidden" name="nuevo_estado" value="finalizado">
+                        
+                        <select name="seleccion_ganadora_id" class="form-select" required>
+                            <option value="">Seleccione al ganador...</option>
+                            {% for mercado in evento.mercados.all %}
+                                {% for sel in mercado.selecciones.all %}
+                                    <option value="{{ sel.id }}">{{ sel.get_tipo_display }} (Cuota: {{ sel.cuota }})</option>
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn" onclick="return confirm('¿Seguro que deseas finalizar este evento y LIQUIDAR todas sus apuestas? Esta acción es irreversible.');">Liquidar</button>
+                    </form>
+                    {% else %}
+                    <span style="color:var(--text-muted)">Liquidado</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

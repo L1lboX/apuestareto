@@ -13,6 +13,9 @@
         <div class="nav-links">
             <a href="{% url 'evento_lista' %}">Eventos</a>
             {% if user.is_authenticated %}
+                {% if user.is_staff or user.is_superuser %}
+                    <a href="{% url 'dashboard_home' %}" style="font-weight: bold; color: #ffa000;">Panel Administrador</a>
+                {% endif %}
                 <a href="{% url 'mis_apuestas' %}">Mis Apuestas</a>
                 <a href="{% url 'wallet' %}">Wallet</a>
                 <form method="post" action="{% url 'logout' %}" style="display:inline">
