@@ -4,7 +4,7 @@
 <div class="header">
     <h1>Dashboard Principal</h1>
     <div>
-        <form action="{% url 'reporte_csv' %}" method="get" style="display:inline-flex; gap:10px;">
+        <form action="{% url 'admin_dashboard:reporte_csv' %}" method="get" style="display:inline-flex; gap:10px;">
             <input type="month" name="mes" class="form-input" required>
             <button type="submit" class="btn">Exportar CSV</button>
         </form>

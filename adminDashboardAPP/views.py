@@ -55,26 +55,28 @@ def dashboard_home(request):
 
 @user_passes_test(is_staff)
 def eventos_control(request):
+    summary = None
     if request.method == 'POST':
         evento_id = request.POST.get('evento_id')
         nuevo_estado = request.POST.get('nuevo_estado')
         seleccion_ganadora_id = request.POST.get('seleccion_ganadora_id')
-
         evento = get_object_or_404(Evento, id=evento_id)
-        
+        # Counters for post‑liquidación
+        total_processed = 0
+        total_won = 0
+        total_paid_by_house = Decimal('0.0000')
         with transaction.atomic():
             evento.estado = nuevo_estado
             evento.save()
-
             if seleccion_ganadora_id and nuevo_estado == Evento.EstadoEvento.FINALIZADO:
                 seleccion_ganadora = get_object_or_404(Seleccion, id=seleccion_ganadora_id)
                 mercado = seleccion_ganadora.mercado
-                
-                # Marcar detalles
-                detalles = ApuestaDetalle.objects.filter(seleccion__mercado=mercado, estado=ApuestaDetalle.EstadoApuestaDetalle.PENDING).select_for_update()
-                
+                # Marcar detalles pendientes del mercado
+                detalles = ApuestaDetalle.objects.filter(
+                    seleccion__mercado=mercado,
+                    estado=ApuestaDetalle.EstadoApuestaDetalle.PENDING
+                ).select_for_update()
                 maestras_a_revisar = set()
-                
                 for detalle in detalles:
                     if str(detalle.seleccion.id) == seleccion_ganadora_id:
                         detalle.estado = ApuestaDetalle.EstadoApuestaDetalle.WON
@@ -82,21 +84,17 @@ def eventos_control(request):
                         detalle.estado = ApuestaDetalle.EstadoApuestaDetalle.LOST
                     detalle.save()
                     maestras_a_revisar.add(detalle.apuesta_maestra)
-                
-                # Revisar Apuestas Maestras
+                # Revisar cada apuesta maestra involucrada
                 for maestra in maestras_a_revisar:
-                    # Refresh from db
                     maestra.refresh_from_db()
-                    
                     if maestra.estado != ApuestaMaestra.EstadoApuesta.ACCEPTED:
                         continue
-                    
+                    total_processed += 1
+                    # Obtener todos los detalles de la maestra
                     todos_detalles = maestra.detalles.all()
                     hay_perdida = any(d.estado == ApuestaDetalle.EstadoApuestaDetalle.LOST for d in todos_detalles)
                     todos_ganados = all(d.estado == ApuestaDetalle.EstadoApuestaDetalle.WON for d in todos_detalles)
-                    
                     tx_id = str(uuid.uuid4())
-                    
                     if hay_perdida:
                         maestra.estado = ApuestaMaestra.EstadoApuesta.LOAST
                         maestra.save()
@@ -105,11 +103,20 @@ def eventos_control(request):
                         maestra.estado = ApuestaMaestra.EstadoApuesta.WON
                         maestra.save()
                         liquidar_apuesta_ganada(maestra, tx_id)
-
-        return redirect('eventos_control')
-
-    eventos = Evento.objects.prefetch_related('mercados__selecciones').order_by('-fecha_inicio')
-    return render(request, 'admin_dashboard/eventos_control.html', {'eventos': eventos})
+                        total_won += 1
+                        total_paid_by_house += maestra.ganancia_potencial
+        # Build a summary message to show in the template
+        summary = {
+            'total_processed': total_processed,
+            'total_won': total_won,
+            'total_paid_by_house': total_paid_by_house,
+        }
+        return render(request, 'admin_dashboard/eventos_control.html', {'eventos': Evento.objects.filter(estado__in=[Evento.EstadoEvento.PROGRAMADO, Evento.EstadoEvento.EN_VIVO]).prefetch_related('mercados__selecciones').order_by('-fecha_inicio'), 'summary': summary})
+    # Mostrar solo eventos programados o en vivo
+    eventos = Evento.objects.filter(estado__in=[Evento.EstadoEvento.PROGRAMADO, Evento.EstadoEvento.EN_VIVO])\
+        .prefetch_related('mercados__selecciones')\
+        .order_by('-fecha_inicio')
+    return render(request, 'admin_dashboard/eventos_control.html', {'eventos': eventos, 'summary': summary})
 
 @user_passes_test(is_staff)
 def reporte_csv(request):

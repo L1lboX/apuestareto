@@ -18,7 +18,7 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             if user.is_staff or user.is_superuser:
-                return redirect('dashboard_home')
+                return redirect('admin_dashboard:dashboard_home')
             return redirect('home')
     else:
         form = AuthenticationForm()

@@ -33,11 +33,11 @@ def crear_apuesta(usuario, monto, selecciones_ids, transaction_id):
         
         perfil = usuario.juegoResponsabe
 
+        # Auto‑exclusión (indefinida o con fecha futura)
         if perfil.autoexclusion_indefinida:
-            raise ValueError("El usuario está autoexcluido indefinidamente y no puede realizar apuestas.")
-        
+            raise ValueError('autoexcluido indefinidamente')
         if perfil.autoexclusion_fecha_fin and perfil.autoexclusion_fecha_fin > timezone.now().date():
-           raise ValueError("Tu cuenta se encuentra autoexcluida temporalmente.")
+            raise ValueError('autoexcluida temporalmente')
 
         # Verificar que no haya superado sus límites de JuegoResponsable
         hoy = timezone.now()
@@ -50,11 +50,11 @@ def crear_apuesta(usuario, monto, selecciones_ids, transaction_id):
         total_mensual = ApuestaMaestra.objects.filter(usuario=usuario, fecha_apuesta__gte=inicio_mes).aggregate(Sum('monto_apostado'))['monto_apostado__sum'] or Decimal('0.0000')
 
         if total_diario + monto > perfil.limite_diario:
-            raise ValueError(f"Límite diario excedido. Tienes disponible: S/ {perfil.limite_diario - total_diario}")
+            raise ValueError('Límite diario excedido')
         if total_semanal + monto > perfil.limite_semanal:
-            raise ValueError(f"Límite semanal excedido. Tienes disponible: S/ {perfil.limite_semanal - total_semanal}")
+            raise ValueError('Límite semanal excedido')
         if total_mensual + monto > perfil.limite_mensual:
-            raise ValueError(f"Límite mensual excedido. Tienes disponible: S/ {perfil.limite_mensual - total_mensual}")
+            raise ValueError('Límite mensual excedido')
 
         selecciones = Seleccion.objects.filter(id__in=selecciones_ids).select_related('mercado__evento')
         cuota_total = Decimal('1.0')
@@ -90,5 +90,6 @@ def crear_apuesta(usuario, monto, selecciones_ids, transaction_id):
                 seleccion=sele,
                 cuato_aplicada=sele.cuota
             )
-            
+        
+    
         return apuesta

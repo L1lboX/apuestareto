@@ -27,5 +27,8 @@ urlpatterns = [
     path('eventos/', include('eventoAPP.urls')),
     path('apuestas/', include('apuestaAPP.urls')),
     path('cuenta/', include('cuentaAPP.urls')),
-    path('admin-dashboard/', include('adminDashboardAPP.urls')),
+    path('user/', include('userAPP.urls')),
+
+    path('dashboard/', include('adminDashboardAPP.urls', namespace='admin_dashboard')),
+
 ]

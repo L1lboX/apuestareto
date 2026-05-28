@@ -113,8 +113,8 @@
 <body>
     <div class="sidebar">
         <a href="{% url 'home' %}" class="logo">FairBet Admin</a>
-        <a href="{% url 'dashboard_home' %}">Dashboard</a>
-        <a href="{% url 'eventos_control' %}">Control de Eventos</a>
+        <a href="{% url 'admin_dashboard:dashboard_home' %}">Dashboard</a>
+        <a href="{% url 'admin_dashboard:eventos_control' %}">Control de Eventos</a>
         <a href="{% url 'home' %}">Volver al Sitio</a>
     </div>
     <div class="main-content">
