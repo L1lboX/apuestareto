@@ -53,9 +53,26 @@
     .id-icon::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h3'/%3E%3C/svg%3E"); }
     .calendar-icon::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"); }
     .lock-icon::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'/%3E%3C/svg%3E"); }
-    .input-wrapper.lock-eye::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; opacity: 0.4; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21'/%3E%3C/svg%3E"); }
-    .password-strength { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; margin-top: -0.5rem; margin-bottom: 2rem; color: #555; }
-    .strength-text.weak { color: #F13554; font-weight: 700; }
+    .password-wrapper input { padding-right: 3rem; }
+    .toggle-password { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 6px; background-color: transparent; background-position: center; background-repeat: no-repeat; background-size: 20px; opacity: 0.48; cursor: pointer; transition: opacity 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23333'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21'/%3E%3C/svg%3E"); }
+    .toggle-password:hover { opacity: 0.78; background-color: #F5F5F5; }
+    .toggle-password:focus-visible { opacity: 0.9; outline: none; box-shadow: 0 0 0 3px rgba(241,53,84,0.14); }
+    .toggle-password.is-visible { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23333'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'/%3E%3C/svg%3E"); }
+    .password-strength { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.8rem; margin-top: -0.5rem; margin-bottom: 0.5rem; color: #555; }
+    .strength-text { font-weight: 700; white-space: nowrap; }
+    .strength-text.level-0 { color: #999; }
+    .strength-text.level-1 { color: #F13554; }
+    .strength-text.level-2 { color: #E8892E; }
+    .strength-text.level-3 { color: #B89212; }
+    .strength-text.level-4 { color: #168A6A; }
+    .strength-text.level-5 { color: #0E7A3B; }
+    .strength-meter { width: 100%; height: 4px; background: #EEE; border-radius: 2px; margin-bottom: 2rem; display: flex; gap: 4px; overflow: hidden; }
+    .strength-segment { height: 100%; flex: 1; background: #DDD; border-radius: 2px; transition: background-color 0.2s ease; }
+    .strength-meter.level-1 .strength-segment.active { background: #F13554; }
+    .strength-meter.level-2 .strength-segment.active { background: #E8892E; }
+    .strength-meter.level-3 .strength-segment.active { background: #D6A31A; }
+    .strength-meter.level-4 .strength-segment.active { background: #18A47C; }
+    .strength-meter.level-5 .strength-segment.active { background: #13A052; }
     .terms-group { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 2rem; }
     .terms-group input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: #F13554; cursor: pointer; }
     .terms-group label { font-size: 0.85rem; color: #555; line-height: 1.4; cursor: pointer; }
@@ -200,23 +217,24 @@
                 <div class="form-grid">
                     <div class="input-group">
                         <label>Contraseña</label>
-                        <div class="input-wrapper lock-icon lock-eye">{{ form.password1 }}</div>
+                        <div class="input-wrapper lock-icon password-wrapper">{{ form.password1 }}<button type="button" class="toggle-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></div>
                     </div>
                     <div class="input-group">
                         <label>Confirmar contraseña</label>
-                        <div class="input-wrapper lock-icon lock-eye">{{ form.password2 }}</div>
+                        <div class="input-wrapper lock-icon password-wrapper">{{ form.password2 }}<button type="button" class="toggle-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></div>
                     </div>
                 </div>
                 
-                <div style="font-size: 0.8rem; color: #555; display:flex; justify-content:space-between; margin-top:-0.5rem; margin-bottom: 0.5rem;">
-                    <span>Fuerza de la contraseña:</span> <span style="color:#F13554;font-weight:700;">Débil</span>
+                <div class="password-strength" aria-live="polite">
+                    <span>Fuerza de la contraseña:</span>
+                    <span id="password-strength-text" class="strength-text level-0">Sin contraseña</span>
                 </div>
-                <div style="width:100%;height:4px;background:#eee;border-radius:2px;margin-bottom:2rem;display:flex;gap:4px;">
-                    <div style="height:100%;flex:1;background:#F13554;border-radius:2px;"></div>
-                    <div style="height:100%;flex:1;background:#ddd;border-radius:2px;"></div>
-                    <div style="height:100%;flex:1;background:#ddd;border-radius:2px;"></div>
-                    <div style="height:100%;flex:1;background:#ddd;border-radius:2px;"></div>
-                    <div style="height:100%;flex:1;background:#ddd;border-radius:2px;"></div>
+                <div id="password-strength-meter" class="strength-meter level-0" role="progressbar" aria-label="Fuerza de la contraseña" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+                    <div class="strength-segment"></div>
+                    <div class="strength-segment"></div>
+                    <div class="strength-segment"></div>
+                    <div class="strength-segment"></div>
+                    <div class="strength-segment"></div>
                 </div>
 
                 <div class="terms-group">
@@ -242,6 +260,67 @@
         const f = document.querySelector('input[name="fecha_nacimiento"]'); if(f) { f.placeholder = "dd / mm / aaaa"; f.type = "date"; f.style.color = "#777"; }
         const p1 = document.querySelector('input[name="password1"]'); if(p1) p1.placeholder = "Crea una contraseña";
         const p2 = document.querySelector('input[name="password2"]'); if(p2) p2.placeholder = "Repite tu contraseña";
+
+        const strengthText = document.getElementById("password-strength-text");
+        const strengthMeter = document.getElementById("password-strength-meter");
+        const strengthSegments = strengthMeter ? strengthMeter.querySelectorAll(".strength-segment") : [];
+        const strengthLabels = ["Sin contraseña", "Débil", "Baja", "Media", "Fuerte", "Muy fuerte"];
+
+        const getPasswordStrength = (password) => {
+            if (!password) return 0;
+
+            const categories = [
+                /[a-z]/.test(password),
+                /[A-Z]/.test(password),
+                /\d/.test(password),
+                /[^A-Za-z0-9]/.test(password),
+            ].filter(Boolean).length;
+
+            let score = 1;
+            if (password.length >= 8) score += 1;
+            if (password.length >= 12) score += 1;
+            if (categories >= 2) score += 1;
+            if (categories >= 3) score += 1;
+            if (categories === 4) score += 1;
+
+            if (password.length < 6) score = Math.min(score, 1);
+            if (password.length < 8) score = Math.min(score, 2);
+
+            return Math.min(score, 5);
+        };
+
+        const updatePasswordStrength = () => {
+            if (!p1 || !strengthText || !strengthMeter) return;
+
+            const level = getPasswordStrength(p1.value);
+            strengthText.textContent = strengthLabels[level];
+            strengthText.className = `strength-text level-${level}`;
+            strengthMeter.className = `strength-meter level-${level}`;
+            strengthMeter.setAttribute("aria-valuenow", level);
+            strengthSegments.forEach((segment, index) => {
+                segment.classList.toggle("active", index < level);
+            });
+        };
+
+        if (p1) {
+            p1.addEventListener("input", updatePasswordStrength);
+            updatePasswordStrength();
+        }
+
+        document.querySelectorAll(".password-wrapper").forEach((wrapper) => {
+            const input = wrapper.querySelector("input");
+            const button = wrapper.querySelector(".toggle-password");
+            if (!input || !button) return;
+
+            button.addEventListener("click", () => {
+                const isVisible = input.type === "text";
+                input.type = isVisible ? "password" : "text";
+                button.classList.toggle("is-visible", !isVisible);
+                button.setAttribute("aria-label", isVisible ? "Mostrar contraseña" : "Ocultar contraseña");
+                button.setAttribute("title", isVisible ? "Mostrar contraseña" : "Ocultar contraseña");
+                input.focus();
+            });
+        });
     });
 </script>
 {% endblock %}
