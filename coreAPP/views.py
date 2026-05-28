@@ -2,12 +2,29 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
-from eventoAPP.models import Evento
+from django.db.models import Case, IntegerField, Prefetch, When
+from eventoAPP.models import Evento, Mercado, Seleccion
 from .forms import RegistroForm
 
 
 def home(request):
-    eventos = Evento.objects.filter(estado__in=['programado', 'en_vivo'])[:6]
+    selecciones_ordenadas = Seleccion.objects.order_by(
+        Case(
+            When(tipo=Seleccion.TipoSeleccion.GANA_LOCAL, then=0),
+            When(tipo=Seleccion.TipoSeleccion.EMPATE, then=1),
+            When(tipo=Seleccion.TipoSeleccion.GANA_VISITANTE, then=2),
+            default=3,
+            output_field=IntegerField(),
+        )
+    )
+    mercados_activos = Mercado.objects.filter(activo=True).prefetch_related(
+        Prefetch('selecciones', queryset=selecciones_ordenadas, to_attr='selecciones_ordenadas')
+    )
+    eventos = Evento.objects.filter(
+        estado__in=[Evento.EstadoEvento.PROGRAMADO, Evento.EstadoEvento.EN_VIVO]
+    ).prefetch_related(
+        Prefetch('mercados', queryset=mercados_activos, to_attr='mercados_activos')
+    ).order_by('fecha_inicio')[:6]
     return render(request, 'home.html', {'eventos': eventos})
 
 

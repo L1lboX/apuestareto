@@ -1,17 +1,53 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Eventos disponibles</h1>
-
-{% if eventos %}
-    {% for evento in eventos %}
-    <div class="card">
-        <h3>{{ evento.local }} vs {{ evento.visitante }}</h3>
-        <p>{{ evento.fecha_inicio|date:"d M Y H:i" }} — {{ evento.get_estado_display }}</p>
-        <a href="{% url 'evento_detalle' evento.pk %}" class="btn btn-primary">Ver cuotas</a>
+<section class="events-page">
+    <div class="events-header">
+        <div>
+            <h1>Eventos disponibles</h1>
+            {% if eventos %}
+            <p>Cuotas listas para apostar</p>
+            {% endif %}
+        </div>
+        <a href="{% url 'evento_lista' %}" class="events-page-button">Ver todos</a>
     </div>
-    {% endfor %}
-{% else %}
-    <p>No hay eventos disponibles en este momento.</p>
-{% endif %}
+
+    {% if eventos %}
+    <div class="event-list">
+        {% for evento in eventos %}
+        <article class="event-card">
+            <div class="event-match">
+                <h2>{{ evento.local }}</h2>
+                <div class="event-meta">
+                    <span>{{ evento.fecha_inicio|date:"d M"|upper }}</span>
+                    <strong>{{ evento.fecha_inicio|date:"H:i" }}</strong>
+                    <small>VS</small>
+                </div>
+                <h2>{{ evento.visitante }}</h2>
+            </div>
+
+            {% with mercado=evento.mercados_activos.0 %}
+                {% if mercado and mercado.selecciones_ordenadas %}
+                <div class="event-odds">
+                    {% for seleccion in mercado.selecciones_ordenadas %}
+                    <a href="{% url 'hacer_apuesta' seleccion_id=seleccion.id %}" class="odd-option">
+                        <span>{{ seleccion.tipo }}</span>
+                        <strong>{{ seleccion.cuota }}</strong>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="event-empty-odds">
+                    <span>Sin cuotas disponibles</span>
+                    <a href="{% url 'evento_detalle' evento.pk %}">Ver detalle</a>
+                </div>
+                {% endif %}
+            {% endwith %}
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p class="empty-state">No hay eventos disponibles en este momento.</p>
+    {% endif %}
+</section>
 {% endblock %}

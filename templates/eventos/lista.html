@@ -1,32 +1,117 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Eventos</h1>
+<section class="events-page">
+    <div class="events-header">
+        <div>
+            <h1>Eventos</h1>
+            {% if page_obj.paginator.count %}
+            <p>{{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }} eventos</p>
+            {% endif %}
+        </div>
 
-{% if eventos %}
-<table>
-    <thead>
-        <tr>
-            <th>Local</th>
-            <th>Visitante</th>
-            <th>Fecha</th>
-            <th>Estado</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
+        {% if page_obj.has_other_pages %}
+        <button class="events-page-button" type="button" id="openEventPages">
+            Pagina {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </button>
+        {% endif %}
+    </div>
+
+    {% if eventos %}
+    <div class="event-list">
         {% for evento in eventos %}
-        <tr>
-            <td>{{ evento.local }}</td>
-            <td>{{ evento.visitante }}</td>
-            <td>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}</td>
-            <td>{{ evento.get_estado_display }}</td>
-            <td><a href="{% url 'evento_detalle' evento.pk %}" class="btn btn-primary">Ver</a></td>
-        </tr>
+        <article class="event-card">
+            <div class="event-match">
+                <h2>{{ evento.local }}</h2>
+                <div class="event-meta">
+                    <span>{{ evento.fecha_inicio|date:"d M"|upper }}</span>
+                    <strong>{{ evento.fecha_inicio|date:"H:i" }}</strong>
+                    <small>VS</small>
+                </div>
+                <h2>{{ evento.visitante }}</h2>
+            </div>
+
+            {% with mercado=evento.mercados_activos.0 %}
+                {% if mercado and mercado.selecciones_ordenadas %}
+                <div class="event-odds">
+                    {% for seleccion in mercado.selecciones_ordenadas %}
+                    <a href="{% url 'hacer_apuesta' seleccion_id=seleccion.id %}" class="odd-option">
+                        <span>{{ seleccion.tipo }}</span>
+                        <strong>{{ seleccion.cuota }}</strong>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="event-empty-odds">
+                    <span>Sin cuotas disponibles</span>
+                    <a href="{% url 'evento_detalle' evento.pk %}">Ver detalle</a>
+                </div>
+                {% endif %}
+            {% endwith %}
+        </article>
         {% endfor %}
-    </tbody>
-</table>
-{% else %}
-    <p>No hay eventos programados.</p>
-{% endif %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="events-pagination" aria-label="Paginacion de eventos">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+        {% else %}
+        <span>Anterior</span>
+        {% endif %}
+
+        <button class="events-page-button" type="button" id="openEventPagesBottom">
+            Ver paginas
+        </button>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+        {% else %}
+        <span>Siguiente</span>
+        {% endif %}
+    </nav>
+
+    <dialog class="events-modal" id="eventPagesModal" aria-labelledby="eventPagesTitle">
+        <div class="events-modal-header">
+            <h2 id="eventPagesTitle">Moverme entre eventos</h2>
+            <button type="button" class="events-modal-close" id="closeEventPages" aria-label="Cerrar">x</button>
+        </div>
+        <p>Elige el bloque de eventos que quieres cargar.</p>
+        <div class="events-page-grid">
+            {% for page_number in paginator.page_range %}
+                {% if page_number == page_obj.number %}
+                <span class="is-active">{{ page_number }}</span>
+                {% else %}
+                <a href="?page={{ page_number }}">{{ page_number }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </dialog>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('eventPagesModal');
+            const openButtons = [
+                document.getElementById('openEventPages'),
+                document.getElementById('openEventPagesBottom')
+            ].filter(Boolean);
+            const closeButton = document.getElementById('closeEventPages');
+
+            openButtons.forEach((button) => {
+                button.addEventListener('click', () => modal.showModal());
+            });
+
+            closeButton.addEventListener('click', () => modal.close());
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.close();
+                }
+            });
+        })();
+    </script>
+    {% endif %}
+    {% else %}
+        <p class="empty-state">No hay eventos programados.</p>
+    {% endif %}
+</section>
 {% endblock %}
