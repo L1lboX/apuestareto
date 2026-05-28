@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+{% extends 'admin_dashboard/base_admin.html' %}
+{% load static %}
+
+{% block content %}
+<div class="header">
+    <h1>Editar Cuota</h1>
+</div>
+<div class="card">
+    <form method="post" class="form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Guardar Cambios</button>
+        <a href="{% url 'admin_dashboard:eventos_control' %}" class="btn" style="background:#555;">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

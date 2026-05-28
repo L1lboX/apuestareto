@@ -21,7 +21,11 @@ admin.site.site_header = 'Administración de Apuestas'
 admin.site.site_title = 'Panel de Control'
 admin.site.index_title = 'Gestión del Sistema'
 
+from django.views.generic import RedirectView
+
 urlpatterns = [
+    # Redirecciona cualquier acceso antiguo a /admin-dashboard/ hacia el nuevo panel /dashboard/
+    path('admin-dashboard/', RedirectView.as_view(url='/dashboard/', permanent=True)),
     path('admin/', admin.site.urls),
     path('', include('coreAPP.urls')),
     path('eventos/', include('eventoAPP.urls')),

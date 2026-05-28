@@ -1,0 +1,121 @@
+{% extends 'admin_dashboard/base_admin.html' %}
+
+{% block content %}
+<div class="header">
+    <h1>Apuestas de {{ usuario.email }}</h1>
+    <a href="{% url 'admin_dashboard:vista_usuarios' %}" class="btn" style="background-color: var(--bg-dark); border: 1px solid rgba(255,255,255,0.2);">
+        ← Volver a Usuarios
+    </a>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h2>Perfil de Usuario</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Nombre Completo</span>
+            <p style="font-weight: 600; margin-top: 0.2rem;">{{ usuario.nombre }} {{ usuario.apellido }}</p>
+        </div>
+        <div>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">DNI</span>
+            <p style="font-weight: 600; margin-top: 0.2rem;">{{ usuario.dni }}-{{ usuario.dni_digito_verificador }}</p>
+        </div>
+        <div>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Estado de Cuenta</span>
+            <p style="font-weight: 600; margin-top: 0.2rem;">
+                {% if usuario.estado == 'verificado' %}
+                <span style="color: #4ade80;">Verificado</span>
+                {% elif usuario.estado == 'bloqueado' %}
+                <span style="color: #f87171;">Bloqueado</span>
+                {% else %}
+                <span style="color: #fbbf24;">{{ usuario.get_estado_display }}</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Historial de Boletos</h2>
+    <p style="color:var(--text-muted); margin-bottom:1rem; font-size:0.9rem;">
+        Lista completa de apuestas registradas para este usuario.
+    </p>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Ticket ID</th>
+                    <th style="width: 180px;">Fecha</th>
+                    <th style="width: 120px;">Tipo</th>
+                    <th>Detalle de Selecciones</th>
+                    <th style="width: 120px;">Monto</th>
+                    <th style="width: 100px;">Cuota</th>
+                    <th style="width: 120px;">Retorno Potencial</th>
+                    <th style="width: 120px; text-align: center;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ap in apuestas %}
+                <tr>
+                    <td><strong>#{{ ap.id }}</strong></td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">{{ ap.fecha_apuesta|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <span style="text-transform: capitalize; font-weight: 500;">
+                            {{ ap.get_tipo_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem; list-style-type: square; color: var(--text-light);">
+                            {% for det in ap.detalles.all %}
+                            <li style="margin-bottom: 0.2rem;">
+                                {{ det.seleccion.mercado.evento.local }} vs {{ det.seleccion.mercado.evento.visitante }} | 
+                                <strong style="color: var(--primary);">{{ det.seleccion.get_tipo_display }}</strong> 
+                                <span style="color: var(--text-muted);">(Cuota: {{ det.cuato_aplicada }})</span>
+                                — 
+                                <span style="font-weight: 600;">
+                                    {% if det.estado == 'won' %}
+                                        <span style="color: #4ade80;">Ganada</span>
+                                    {% elif det.estado == 'lost' %}
+                                        <span style="color: #f87171;">Perdida</span>
+                                    {% elif det.estado == 'pending' %}
+                                        <span style="color: #fbbf24;">Pendiente</span>
+                                    {% else %}
+                                        <span style="color: var(--text-muted);">{{ det.get_estado_display }}</span>
+                                    {% endif %}
+                                </span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td style="font-weight: 500;">S/ {{ ap.monto_apostado|floatformat:2 }}</td>
+                    <td style="font-family: monospace;">{{ ap.cuota_total|floatformat:2 }}</td>
+                    <td style="font-weight: 600; color: #17a2b8;">S/ {{ ap.ganancia_potencial|floatformat:2 }}</td>
+                    <td style="text-align: center;">
+                        {% if ap.estado == 'won' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; background: rgba(40, 167, 69, 0.2); color: #4ade80; font-weight: 600; border: 1px solid rgba(40, 167, 69, 0.4);">
+                            GANADA
+                        </span>
+                        {% elif ap.estado == 'loast' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; background: rgba(220, 53, 69, 0.2); color: #f87171; font-weight: 600; border: 1px solid rgba(220, 53, 69, 0.4);">
+                            PERDIDA
+                        </span>
+                        {% elif ap.estado == 'accepted' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; background: rgba(251, 191, 36, 0.2); color: #fbbf24; font-weight: 600; border: 1px solid rgba(251, 191, 36, 0.4);">
+                            ACEPTADA
+                        </span>
+                        {% else %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; background: rgba(255,255,255,0.1); color: var(--text-muted); font-weight: 600;">
+                            {{ ap.get_estado_display|upper }}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Este usuario no tiene apuestas registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

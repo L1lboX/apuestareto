@@ -1,4 +1,7 @@
 import csv
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
+from .forms import EventoForm, SeleccionFormSet, SeleccionForm
 import uuid
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,6 +15,8 @@ from apuestaAPP.models import ApuestaMaestra, ApuestaDetalle
 from eventoAPP.models import Evento, Seleccion
 from cuentaAPP.servicio import liquidar_apuesta_ganada, liquidar_apuesta_perdida
 from userAPP.models import User
+from .models import AuditoriaRegistro, ActividadSospechosa
+
 
 
 def is_staff(user):
@@ -146,3 +151,178 @@ def reporte_csv(request):
         ])
 
     return response
+
+
+@user_passes_test(is_staff)
+def vista_auditoria(request):
+    registros = AuditoriaRegistro.objects.all().order_by('id')
+    
+    verificacion_resultado = None
+    if request.method == 'POST' and 'verificar' in request.POST:
+        import hashlib
+        import json
+        
+        integra = True
+        error_id = None
+        count = 0
+        expected_hash_anterior = '0' * 64
+        
+        for reg in registros:
+            if reg.hash_anterior != expected_hash_anterior:
+                integra = False
+                error_id = reg.id
+                break
+                
+            contenido = expected_hash_anterior + json.dumps(reg.payload, sort_keys=True, default=str)
+            computed_hash_actual = hashlib.sha256(contenido.encode()).hexdigest()
+            
+            if reg.hash_actual != computed_hash_actual:
+                integra = False
+                error_id = reg.id
+                break
+                
+            expected_hash_anterior = reg.hash_actual
+            count += 1
+            
+        if integra:
+            verificacion_resultado = {
+                'success': True,
+                'message': f"Cadena íntegra: {count} registros verificados"
+            }
+        else:
+            verificacion_resultado = {
+                'success': False,
+                'message': f"Registro corrupto encontrado en ID: {error_id}"
+            }
+            
+    registros_render = registros.order_by('-id')
+    
+    context = {
+        'registros': registros_render,
+        'verificacion_resultado': verificacion_resultado
+    }
+    return render(request, 'admin_dashboard/auditoria.html', context)
+
+
+@user_passes_test(is_staff)
+def vista_alertas(request):
+    if request.method == 'POST' and 'alerta_id' in request.POST:
+        alerta_id = request.POST.get('alerta_id')
+        alerta = get_object_or_404(ActividadSospechosa, id=alerta_id)
+        alerta.revisado = True
+        alerta.save()
+        return redirect('admin_dashboard:vista_alertas')
+        
+    alertas = ActividadSospechosa.objects.filter(revisado=False).order_by('-fecha')
+    return render(request, 'admin_dashboard/alertas.html', {'alertas': alertas})
+
+
+@user_passes_test(is_staff)
+def vista_usuarios(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        accion = request.POST.get('accion')
+        usuario_a_modificar = get_object_or_404(User, id=user_id)
+        if accion == 'verificar':
+            usuario_a_modificar.estado = User.EstadoUser.VERIFICADO
+            usuario_a_modificar.save()
+        elif accion == 'bloquear':
+            usuario_a_modificar.estado = User.EstadoUser.BLOQUEADO
+            usuario_a_modificar.save()
+        return redirect('admin_dashboard:vista_usuarios')
+
+    estado_filtro = request.GET.get('estado')
+    usuarios = User.objects.all()
+    
+    if estado_filtro:
+        usuarios = usuarios.filter(estado=estado_filtro)
+        
+    usuarios = usuarios.annotate(
+        total_apostado=Sum('apuestas__monto_apostado')
+    ).order_by('-date_joined')
+    
+    context = {
+        'usuarios': usuarios,
+        'estado_filtro': estado_filtro,
+        'choices': User.EstadoUser.choices
+    }
+    return render(request, 'admin_dashboard/usuarios.html', context)
+
+
+@user_passes_test(is_staff)
+def vista_usuario_apuestas(request, usuario_id):
+    usuario = get_object_or_404(User, id=usuario_id)
+    apuestas = ApuestaMaestra.objects.filter(usuario=usuario).order_by('-fecha_apuesta')
+    return render(request, 'admin_dashboard/usuario_apuestas.html', {
+        'usuario': usuario,
+        'apuestas': apuestas
+    })
+
+# ---------- NEW VIEWS ----------
+
+@user_passes_test(is_staff)
+def crear_evento(request):
+    if request.method == 'POST':
+        evento_form = EventoForm(request.POST)
+        if evento_form.is_valid():
+            evento = evento_form.save(commit=False)
+            # Estado por defecto PROGRAMADO ya está en modelo
+            evento.save()
+            # Crear mercado 1X2 asociado al evento
+            from eventoAPP.models import Mercado, Seleccion
+            mercado = Mercado.objects.create(evento=evento, tipo=Mercado.TipoMercado.RESULTADO_FINAL)
+            # Crear selecciones 1, X, 2 con cuotas enviadas en POST
+            cuotas = {
+                '1': request.POST.get('cuota_1'),
+                'X': request.POST.get('cuota_X'),
+                '2': request.POST.get('cuota_2'),
+            }
+            for tipo, cuota in cuotas.items():
+                if cuota:
+                    Seleccion.objects.create(mercado=mercado, tipo=tipo, cuota=cuota)
+            messages.success(request, 'Evento creado correctamente')
+            return redirect('admin_dashboard:eventos_control')
+    else:
+        evento_form = EventoForm()
+    return render(request, 'admin_dashboard/eventos_crear.html', {'form': evento_form})
+
+@user_passes_test(is_staff)
+def detalle_evento(request, evento_id):
+    evento = get_object_or_404(Evento, id=evento_id)
+    mercado = evento.mercados.first()
+    selecciones = mercado.selecciones.all() if mercado else []
+    apuestas = ApuestaMaestra.objects.filter(evento=evento).select_related('usuario')
+    return render(request, 'admin_dashboard/evento_detalle.html', {
+        'evento': evento,
+        'mercado': mercado,
+        'selecciones': selecciones,
+        'apuestas': apuestas,
+    })
+
+@user_passes_test(is_staff)
+def editar_cuota(request, seleccion_id):
+    seleccion = get_object_or_404(Seleccion, id=seleccion_id)
+    if request.method == 'POST':
+        form = SeleccionForm(request.POST, instance=seleccion)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Cuota actualizada')
+            return redirect('admin_dashboard:detalle_evento', evento_id=seleccion.mercado.evento.id)
+    else:
+        form = SeleccionForm(instance=seleccion)
+    return render(request, 'admin_dashboard/eventos_editar.html', {'form': form, 'seleccion': seleccion})
+
+@user_passes_test(is_staff)
+def actualizar_estado(request, evento_id):
+    evento = get_object_or_404(Evento, id=evento_id)
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('nuevo_estado')
+        if nuevo_estado in dict(Evento.EstadoEvento.choices):
+            evento.estado = nuevo_estado
+            evento.save()
+            messages.success(request, f'Estado del evento actualizado a {evento.get_estado_display()}')
+    return redirect('admin_dashboard:eventos_control')
+
+
+
+

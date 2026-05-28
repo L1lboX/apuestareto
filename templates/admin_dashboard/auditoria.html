@@ -1,0 +1,93 @@
+{% extends 'admin_dashboard/base_admin.html' %}
+
+{% block content %}
+<div class="header">
+    <h1>Bitácora de Auditoría Inmutable (Hash Chain)</h1>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="verificar" class="btn" style="background-color: #28a745; display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
+            Verificar Integridad
+        </button>
+    </form>
+</div>
+
+{% if verificacion_resultado %}
+<div class="card" style="margin-bottom: 2rem; border-left: 5px solid {% if verificacion_resultado.success %}#28a745{% else %}#dc3545{% endif %}; background: rgba({% if verificacion_resultado.success %}40, 167, 69{% else %}220, 53, 69{% endif %}, 0.1);">
+    <h3 style="display: flex; align-items: center; gap: 10px; color: {% if verificacion_resultado.success %}#28a745{% else %}#dc3545{% endif %};">
+        {% if verificacion_resultado.success %}
+        <span>✅ Cadena Íntegra</span>
+        {% else %}
+        <span>❌ Alerta de Integridad</span>
+        {% endif %}
+    </h3>
+    <p style="margin-top: 0.5rem; font-weight: 500;">{{ verificacion_resultado.message }}</p>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Registros de Actividad</h2>
+    <p style="color:var(--text-muted); margin-bottom:1rem; font-size:0.9rem;">
+        Esta bitácora es inmutable. Cada registro está encadenado al anterior mediante el hash de su contenido, garantizando la integridad e inmutabilidad de los datos críticos.
+    </p>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80px;">ID</th>
+                    <th style="width: 180px;">Timestamp</th>
+                    <th style="width: 200px;">Tipo de Evento</th>
+                    <th>Detalles (Payload)</th>
+                    <th style="width: 180px;">Hash Anterior</th>
+                    <th style="width: 180px;">Hash Actual</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in registros %}
+                <tr>
+                    <td><strong>#{{ reg.id }}</strong></td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">{{ reg.timestamp|date:"d/m/Y H:i:s" }}</td>
+                    <td>
+                        {% if reg.tipo_evento == 'APUESTA_CREADA' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; background: rgba(0, 123, 255, 0.2); color: #3b82f6; font-weight: 600;">
+                            APUESTA_CREADA
+                        </span>
+                        {% elif reg.tipo_evento == 'WALLET_MOVIMIENTO' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; background: rgba(111, 66, 193, 0.2); color: #a855f7; font-weight: 600;">
+                            WALLET_MOVIMIENTO
+                        </span>
+                        {% else %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; background: rgba(108, 117, 125, 0.2); color: #94a3b8; font-weight: 600;">
+                            {{ reg.tipo_evento }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <details style="cursor: pointer; font-size: 0.85rem; background: rgba(0,0,0,0.2); padding: 0.4rem; border-radius: 6px;">
+                            <summary style="outline: none; color: var(--text-muted);">Ver payload JSON</summary>
+                            <pre style="margin-top: 0.5rem; white-space: pre-wrap; font-family: monospace; font-size: 0.8rem; color: #f8f9fa;">{{ reg.payload }}</pre>
+                        </details>
+                    </td>
+                    <td>
+                        <code title="{{ reg.hash_anterior }}" style="font-family: monospace; font-size: 0.85rem; background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 4px;">
+                            {{ reg.hash_anterior|slice:":16" }}...
+                        </code>
+                    </td>
+                    <td>
+                        <code title="{{ reg.hash_actual }}" style="font-family: monospace; font-size: 0.85rem; background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 4px; color: #17a2b8;">
+                            {{ reg.hash_actual|slice:":16" }}...
+                        </code>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted);">No hay registros de auditoría aún.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

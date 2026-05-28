@@ -1,0 +1,110 @@
+{% extends 'admin_dashboard/base_admin.html' %}
+
+{% block content %}
+<div class="header">
+    <h1>Gestión de Usuarios</h1>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <form method="get" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <label for="estado-filtro" style="color: var(--text-muted); font-weight: 500;">Filtrar por Estado:</label>
+        <select name="estado" id="estado-filtro" class="form-select" style="min-width: 200px;" onchange="this.form.submit()">
+            <option value="">Todos los Estados</option>
+            {% for val, name in choices %}
+            <option value="{{ val }}" {% if estado_filtro == val %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        {% if estado_filtro %}
+            <a href="{% url 'admin_dashboard:vista_usuarios' %}" class="btn" style="background-color: var(--bg-dark); border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 6px;">
+                Limpiar filtro
+            </a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <h2>Catálogo de Usuarios</h2>
+    <p style="color:var(--text-muted); margin-bottom:1rem; font-size:0.9rem;">
+        Administración de cuentas de usuario, verificación de identidad y bloqueo de cuentas.
+    </p>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>DNI</th>
+                    <th>Estado</th>
+                    <th>Fecha de Registro</th>
+                    <th>Total Apostado</th>
+                    <th style="text-align: center; width: 280px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>
+                        <strong style="color: var(--text-light); font-size: 0.95rem;">{{ u.email }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ u.nombre }} {{ u.apellido }}</div>
+                    </td>
+                    <td style="font-family: monospace; font-size: 0.9rem;">{{ u.dni }}-{{ u.dni_digito_verificador }}</td>
+                    <td>
+                        {% if u.estado == 'verificado' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; background: rgba(40, 167, 69, 0.2); color: #4ade80; font-weight: 600;">
+                            Verificado
+                        </span>
+                        {% elif u.estado == 'bloqueado' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; background: rgba(220, 53, 69, 0.2); color: #f87171; font-weight: 600;">
+                            Bloqueado
+                        </span>
+                        {% elif u.estado == 'autoexcluido' %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; background: rgba(251, 191, 36, 0.2); color: #fbbf24; font-weight: 600;">
+                            Autoexcluido
+                        </span>
+                        {% else %}
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; background: rgba(108, 117, 125, 0.2); color: #94a3b8; font-weight: 600;">
+                            Pendiente Verificación
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">{{ u.date_joined|date:"d/m/Y H:i" }}</td>
+                    <td style="font-weight: 600; color: #17a2b8;">S/ {{ u.total_apostado|default:0.0000|floatformat:2 }}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                            {% if u.estado != 'verificado' %}
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <input type="hidden" name="accion" value="verificar">
+                                <button type="submit" class="btn" style="background-color: #28a745; font-size: 0.8rem; padding: 0.35rem 0.7rem; border-radius: 4px;">
+                                    Verificar
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if u.estado != 'bloqueado' %}
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <input type="hidden" name="accion" value="bloquear">
+                                <button type="submit" class="btn" style="background-color: #dc3545; font-size: 0.8rem; padding: 0.35rem 0.7rem; border-radius: 4px;" onclick="return confirm('¿Seguro que deseas bloquear a este usuario?');">
+                                    Bloquear
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            <a href="{% url 'admin_dashboard:vista_usuario_apuestas' u.id %}" class="btn" style="background-color: var(--bg-dark); border: 1px solid rgba(255,255,255,0.15); font-size: 0.8rem; padding: 0.35rem 0.7rem; border-radius: 4px;">
+                                Ver apuestas
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No se encontraron usuarios para este filtro.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

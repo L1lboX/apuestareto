@@ -115,6 +115,23 @@
         <a href="{% url 'home' %}" class="logo">FairBet Admin</a>
         <a href="{% url 'admin_dashboard:dashboard_home' %}">Dashboard</a>
         <a href="{% url 'admin_dashboard:eventos_control' %}">Control de Eventos</a>
+        <a href="{% url 'admin_dashboard:vista_auditoria' %}" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Auditoría</span>
+            {% if auditoria_registros_count > 0 %}
+                <span style="background-color: rgba(255,255,255,0.15); color: #fff; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; line-height: 1;">
+                    {{ auditoria_registros_count }}
+                </span>
+            {% endif %}
+        </a>
+        <a href="{% url 'admin_dashboard:vista_alertas' %}" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Alertas Anti-fraude</span>
+            {% if alertas_pendientes_count > 0 %}
+                <span style="background-color: #e94560; color: white; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; line-height: 1;">
+                    {{ alertas_pendientes_count }}
+                </span>
+            {% endif %}
+        </a>
+        <a href="{% url 'admin_dashboard:vista_usuarios' %}">Usuarios</a>
         <a href="{% url 'home' %}">Volver al Sitio</a>
     </div>
     <div class="main-content">
