@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Autoexclusion</h1>
+
+{% if blocked %}
+<div class="card" style="text-align:center;">
+    <div style="font-size:3rem; margin-bottom:1rem;">&#128683;</div>
+    <h2 style="color:#e94560; margin-bottom:0.75rem;">Cuenta Autoexcluida</h2>
+    <p style="color:#667085; margin-bottom:1.5rem;">
+        Tu cuenta esta autoexcluida hasta <strong>{{ perfil.autoexclusion_fecha_fin|date:"d/m/Y" }}</strong>.
+        No puedes realizar apuestas durante este periodo.
+    </p>
+    <p style="color:#98a2b3; font-size:0.85rem;">
+        La autoexclusion es irreversible hasta la fecha indicada.
+        Si necesitas ayuda, contacta con soporte.
+    </p>
+</div>
+{% else %}
+<div class="card">
+    <p style="color:#667085; margin-bottom:1.5rem; font-size:0.95rem;">
+        La autoexclusion es una medida de juego responsable que te impide realizar apuestas
+        durante el periodo que elijas. <strong>Esta accion es irreversible</strong> hasta que termine el plazo.
+    </p>
+
+    <div style="background:#fff3cd; padding:0.75rem 1rem; border-radius:6px; margin-bottom:1.5rem; font-size:0.85rem; color:#856404; border:1px solid #ffc107;">
+        <strong>Atencion:</strong> Una vez activada la autoexclusion, no podras apostar ni revertirla hasta que finalice el periodo.
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <p style="font-weight:600; margin-bottom:0.75rem; color:#1f2937;">Elige el periodo de autoexclusion:</p>
+        <div style="display:grid; gap:0.5rem; margin-bottom:1.5rem;">
+            <label style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; transition:border-color 0.2s;">
+                <input type="radio" name="opcion" value="7" required style="accent-color:#e94560;">
+                <div>
+                    <strong style="color:#1f2937;">7 dias</strong>
+                    <span style="display:block; color:#667085; font-size:0.8rem;">Exclusion corta hasta {{ fecha_7 }}</span>
+                </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; transition:border-color 0.2s;">
+                <input type="radio" name="opcion" value="30" style="accent-color:#e94560;">
+                <div>
+                    <strong style="color:#1f2937;">30 dias</strong>
+                    <span style="display:block; color:#667085; font-size:0.8rem;">Exclusion de un mes hasta {{ fecha_30 }}</span>
+                </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; transition:border-color 0.2s;">
+                <input type="radio" name="opcion" value="90" style="accent-color:#e94560;">
+                <div>
+                    <strong style="color:#1f2937;">90 dias</strong>
+                    <span style="display:block; color:#667085; font-size:0.8rem;">Exclusion de tres meses hasta {{ fecha_90 }}</span>
+                </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; transition:border-color 0.2s;">
+                <input type="radio" name="opcion" value="indefinido" style="accent-color:#e94560;">
+                <div>
+                    <strong style="color:#e94560;">Indefinido</strong>
+                    <span style="display:block; color:#667085; font-size:0.8rem;">Exclusion permanente. Solo soporte puede reactivar tu cuenta.</span>
+                </div>
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:0.75rem; font-size:1rem; font-weight:700;" onclick="return confirm('¿Estas seguro? Esta accion es irreversible durante el periodo seleccionado.');">
+            Activar Autoexclusion
+        </button>
+    </form>
+
+    <p style="margin-top:1rem; text-align:center;">
+        <a href="{% url 'wallet' %}" style="color:#667085; font-size:0.85rem;">Volver a Wallet</a>
+    </p>
+</div>
+{% endif %}
+{% endblock %}

@@ -13,7 +13,7 @@ from django.db import transaction
 
 from apuestaAPP.models import ApuestaMaestra, ApuestaDetalle
 from eventoAPP.models import Evento, Seleccion
-from cuentaAPP.servicio import liquidar_apuesta_ganada, liquidar_apuesta_perdida
+from cuentaAPP.servicio import liquidar_apuesta_ganada, liquidar_apuesta_perdida, void_apuesta
 from userAPP.models import User
 from .models import AuditoriaRegistro, ActividadSospechosa
 
@@ -321,9 +321,38 @@ def actualizar_estado(request, evento_id):
     if request.method == 'POST':
         nuevo_estado = request.POST.get('nuevo_estado')
         if nuevo_estado in dict(Evento.EstadoEvento.choices):
-            evento.estado = nuevo_estado
-            evento.save()
-            messages.success(request, f'Estado del evento actualizado a {evento.get_estado_display()}')
+            with transaction.atomic():
+                evento.estado = nuevo_estado
+                evento.save()
+
+                if nuevo_estado in [Evento.EstadoEvento.SUSPENDIDO, Evento.EstadoEvento.ANULADO]:
+                    detalles = ApuestaDetalle.objects.filter(
+                        seleccion__mercado__evento=evento,
+                        estado=ApuestaDetalle.EstadoApuestaDetalle.PENDING
+                    ).select_related('apuesta_maestra').select_for_update()
+
+                    maestras = {}
+                    for det in detalles:
+                        if det.apuesta_maestra_id not in maestras:
+                            maestras[det.apuesta_maestra_id] = det.apuesta_maestra
+
+                    for maestra in maestras.values():
+                        maestra.refresh_from_db()
+                        if maestra.estado != ApuestaMaestra.EstadoApuesta.ACCEPTED:
+                            continue
+                        maestra.detalles.all().update(estado=ApuestaDetalle.EstadoApuestaDetalle.VOID)
+                        maestra.estado = ApuestaMaestra.EstadoApuesta.VOID
+                        maestra.save()
+                        tx_id = str(uuid.uuid4())
+                        void_apuesta(maestra, tx_id)
+
+                    count = len(maestras)
+                    if count > 0:
+                        messages.warning(request, f'Evento {evento.get_estado_display()}: {count} apuesta(s) anulada(s) y reembolsada(s).')
+                    else:
+                        messages.success(request, f'Estado del evento actualizado a {evento.get_estado_display()}.')
+                else:
+                    messages.success(request, f'Estado del evento actualizado a {evento.get_estado_display()}.')
     return redirect('admin_dashboard:eventos_control')
 
 

@@ -333,7 +333,7 @@
                     <h1>Mi Wallet</h1>
                     <p>Saldo disponible</p>
                 </div>
-                <div class="balance">S/ {{ wallet.saldo_actual }}</div>
+                <div class="balance">S/ {{ wallet.saldo_actual|floatformat:2 }}</div>
             </section>
 
             <section class="recharge-section">
@@ -465,6 +465,47 @@
                     </div>
                 </form>
             </section>
+
+            <section class="recharge-section">
+                <h2>Juego Responsable</h2>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.75rem; margin-bottom:1.25rem;">
+                    <div style="background:#f8f9fa; padding:0.75rem; border-radius:6px; text-align:center;">
+                        <span style="display:block; color:#667085; font-size:0.7rem; text-transform:uppercase; margin-bottom:0.25rem;">Limite Diario</span>
+                        <strong style="color:#1f2937; font-size:1.1rem;">S/ {{ juego.limite_diario|floatformat:2 }}</strong>
+                    </div>
+                    <div style="background:#f8f9fa; padding:0.75rem; border-radius:6px; text-align:center;">
+                        <span style="display:block; color:#667085; font-size:0.7rem; text-transform:uppercase; margin-bottom:0.25rem;">Limite Semanal</span>
+                        <strong style="color:#1f2937; font-size:1.1rem;">S/ {{ juego.limite_semanal|floatformat:2 }}</strong>
+                    </div>
+                    <div style="background:#f8f9fa; padding:0.75rem; border-radius:6px; text-align:center;">
+                        <span style="display:block; color:#667085; font-size:0.7rem; text-transform:uppercase; margin-bottom:0.25rem;">Limite Mensual</span>
+                        <strong style="color:#1f2937; font-size:1.1rem;">S/ {{ juego.limite_mensual|floatformat:2 }}</strong>
+                    </div>
+                </div>
+
+                <p class="wallet-step">Ajustar limites (bajar es inmediato, subir requiere 24h)</p>
+                <form method="post" action="{% url 'actualizar_limites' %}">
+                    {% csrf_token %}
+                    <div class="details-grid">
+                        <div class="details-group">
+                            <label>Limite Diario (S/)</label>
+                            <input type="number" name="limite_diario" step="0.01" min="1" value="{{ juego.limite_diario|floatformat:2 }}">
+                        </div>
+                        <div class="details-group">
+                            <label>Limite Semanal (S/)</label>
+                            <input type="number" name="limite_semanal" step="0.01" min="1" value="{{ juego.limite_semanal|floatformat:2 }}">
+                        </div>
+                        <div class="details-group">
+                            <label>Limite Mensual (S/)</label>
+                            <input type="number" name="limite_mensual" step="0.01" min="1" value="{{ juego.limite_mensual|floatformat:2 }}">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.75rem; align-items:center; margin-top:1rem; flex-wrap:wrap;">
+                        <button type="submit" class="btn-recharge" style="padding:0.65rem 1.25rem; font-size:0.9rem;">Actualizar Limites</button>
+                        <a href="{% url 'autoexcluir' %}" style="color:#e94560; font-size:0.85rem; font-weight:600; text-decoration:none;">Auto-exclusion</a>
+                    </div>
+                </form>
+            </section>
         </div>
 
         <aside class="movements-section">
@@ -497,7 +538,7 @@
                                 <span class="type-badge type-debito">- Debito</span>
                                 {% endif %}
                             </td>
-                            <td class="movement-amount">S/ {{ m.monto }}</td>
+                            <td class="movement-amount">S/ {{ m.monto|floatformat:2 }}</td>
                             <td class="movement-id" title="{{ m.transaction_id }}">{{ m.transaction_id }}</td>
                         </tr>
                         {% endfor %}

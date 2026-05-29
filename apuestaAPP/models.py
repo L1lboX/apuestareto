@@ -9,6 +9,7 @@ class ApuestaMaestra(models.Model):
         WON = 'won', 'Ganada'
         LOAST = 'loast', 'Perdida'
         CASHED_OUT = 'cashed_out', 'Cerrada Anticipadamente'
+        VOID = 'void', 'Anulada'
 
     class TipoApuesta(models.TextChoices):
         SIMPLE = 'simple', 'Simple'

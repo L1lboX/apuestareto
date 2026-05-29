@@ -2,7 +2,10 @@
 
 {% block content %}
 <h1>{{ evento.local }} vs {{ evento.visitante }}</h1>
-<p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }} — {{ evento.get_estado_display }}</p>
+<p>{{ evento.fecha_inicio|date:"d/m/Y H:i" }}</p>
+<span class="event-status-badge event-status-{{ evento.estado }}" style="margin-bottom:1rem;">
+    {{ evento.get_estado_display }}
+</span>
 
 {% for mercado in mercados %}
 <div class="card" style="margin-top:1rem">
@@ -20,7 +23,18 @@
                     <td>{{ sel.get_tipo_display }}</td>
                     <td>{{ sel.cuota }}</td>
                     <td>
-                        <a href="{% url 'hacer_apuesta' seleccion_id=sel.id %}" class="btn btn-primary">Apostar</a>
+                        {% if evento.estado == 'programado' %}
+                        <a href="{% url 'hacer_apuesta' seleccion_id=sel.id %}" class="btn btn-primary"
+                           onclick="agregarSeleccion(this); return false;"
+                           data-seleccion-id="{{ sel.id }}"
+                           data-evento="{{ evento.local }} vs {{ evento.visitante }}"
+                           data-tipo="{{ sel.get_tipo_display }}"
+                           data-cuota="{{ sel.cuota }}">
+                            Apostar
+                        </a>
+                        {% else %}
+                        <span class="btn btn-primary disabled">No disponible</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endif %}

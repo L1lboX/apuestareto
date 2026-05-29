@@ -13,26 +13,34 @@ def autoexcluir(request):
     La exclusión es irreversible hasta la fecha indicada.
     """
     perfil = juegoResponsabe.objects.get(user=request.user)
-    # Si ya hay exclusión activa, impedir cambios
-    if perfil.autoexclusion_fecha_fin and perfil.autoexclusion_fecha_fin > timezone.now().date():
-        messages.error(request, f'Tu cuenta está autoexcluida hasta {perfil.autoexclusion_fecha_fin}. No puedes realizar apuestas.')
-        return render(request, 'user/autoexcluir.html', {'perfil': perfil, 'blocked': True})
+    hoy = timezone.now().date()
+    ctx = {
+        'perfil': perfil,
+        'fecha_7': (hoy + timedelta(days=7)).strftime('%d/%m/%Y'),
+        'fecha_30': (hoy + timedelta(days=30)).strftime('%d/%m/%Y'),
+        'fecha_90': (hoy + timedelta(days=90)).strftime('%d/%m/%Y'),
+    }
+    if perfil.autoexclusion_fecha_fin and perfil.autoexclusion_fecha_fin > hoy:
+        messages.error(request, f'Tu cuenta esta autoexcluida hasta {perfil.autoexclusion_fecha_fin}. No puedes realizar apuestas.')
+        return render(request, 'user/autoexcluir.html', {**ctx, 'blocked': True})
+    if perfil.autoexclusion_indefinida:
+        messages.error(request, 'Tu cuenta esta autoexcluida indefinidamente.')
+        return render(request, 'user/autoexcluir.html', {**ctx, 'blocked': True})
     if request.method == 'POST':
         opcion = request.POST.get('opcion')
         fecha_fin = None
         indefinido = False
         if opcion == '7':
-            fecha_fin = timezone.now().date() + timedelta(days=7)
+            fecha_fin = hoy + timedelta(days=7)
         elif opcion == '30':
-            fecha_fin = timezone.now().date() + timedelta(days=30)
+            fecha_fin = hoy + timedelta(days=30)
         elif opcion == '90':
-            fecha_fin = timezone.now().date() + timedelta(days=90)
+            fecha_fin = hoy + timedelta(days=90)
         elif opcion == 'indefinido':
             indefinido = True
         else:
-            messages.error(request, 'Opción no válida.')
+            messages.error(request, 'Opcion no valida.')
             return redirect('autoexcluir')
-        # Guardar exclusión
         perfil.autoexclusion_fecha_fin = None if indefinido else fecha_fin
         perfil.autoexclusion_indefinida = indefinido
         perfil.save()
@@ -41,4 +49,4 @@ def autoexcluir(request):
         else:
             messages.success(request, f'Has sido autoexcluido hasta {fecha_fin}.')
         return redirect('autoexcluir')
-    return render(request, 'user/autoexcluir.html', {'perfil': perfil, 'blocked': False})
+    return render(request, 'user/autoexcluir.html', {**ctx, 'blocked': False})

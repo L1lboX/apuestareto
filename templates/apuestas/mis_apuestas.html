@@ -1,37 +1,111 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Mis Apuestas</h1>
+<div class="events-header">
+    <div>
+        <h1>Mis Apuestas</h1>
+        {% if paginator.count %}
+        <p>{{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ paginator.count }} apuestas</p>
+        {% endif %}
+    </div>
+</div>
 
 {% if apuestas %}
-<table>
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Cuota</th>
-            <th>Ganancia Pot.</th>
-            <th>Estado</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for apuesta in apuestas %}
-        <tr>
-            <td>{{ apuesta.id }}</td>
-            <td>{{ apuesta.fecha_apuesta|date:"d/m/y H:i" }}</td>
-            <td>{{ apuesta.get_tipo_display }}</td>
-            <td>S/ {{ apuesta.monto_apostado }}</td>
-            <td>{{ apuesta.cuota_total }}</td>
-            <td>S/ {{ apuesta.ganancia_potencial }}</td>
-            <td>{{ apuesta.get_estado_display }}</td>
-        </tr>
+    {% for apuesta in apuestas %}
+    <div class="bet-card">
+        <div class="bet-card-header">
+            <div class="bet-card-header-left">
+                <span class="bet-card-id">#{{ apuesta.id }}</span>
+                <span class="bet-card-fecha">{{ apuesta.fecha_apuesta|date:"d/m/Y H:i" }}</span>
+                <span class="bet-tag {% if apuesta.tipo == 'simple' %}bet-tag-simple{% else %}bet-tag-combinada{% endif %}">
+                    {{ apuesta.get_tipo_display }}
+                </span>
+            </div>
+            <span class="bet-status bet-status-{{ apuesta.estado }}">
+                {{ apuesta.get_estado_display }}
+            </span>
+        </div>
+
+        <div class="bet-card-body">
+            <div class="bet-card-amounts">
+                <div class="bet-amount-item">
+                    <span>Monto</span>
+                    <strong>S/ {{ apuesta.monto_apostado|floatformat:2 }}</strong>
+                </div>
+                <div class="bet-amount-item">
+                    <span>Cuota</span>
+                    <strong>{{ apuesta.cuota_total|floatformat:2 }}</strong>
+                </div>
+                <div class="bet-amount-item">
+                    <span>Ganancia Pot.</span>
+                    <strong>S/ {{ apuesta.ganancia_potencial|floatformat:2 }}</strong>
+                </div>
+            </div>
+
+            <button class="bet-card-detail-btn" onclick="toggleDetalle(this, 'detalle-{{ apuesta.id }}')">
+                Ver detalle
+            </button>
+        </div>
+
+        <div class="bet-detail-panel" id="detalle-{{ apuesta.id }}">
+            <ul class="bet-detail-list">
+                {% for det in apuesta.detalles.all %}
+                <li class="bet-detail-item">
+                    <div class="bet-detail-info">
+                        <div class="bet-detail-evento">
+                            {{ det.seleccion.mercado.evento.local }} vs {{ det.seleccion.mercado.evento.visitante }}
+                        </div>
+                        <div class="bet-detail-tipo">
+                            {{ det.seleccion.get_tipo_display }}
+                        </div>
+                    </div>
+                    <div class="bet-detail-cuota">{{ det.cuato_aplicada }}</div>
+                    <span class="bet-detail-estado bet-detail-{{ det.estado }}">
+                        {{ det.get_estado_display }}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+    <nav class="events-pagination" aria-label="Paginacion de apuestas">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+        {% else %}
+        <span>Anterior</span>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+            {% if num == page_obj.number %}
+            <span class="is-active" style="background:#e94560; color:#fff;">{{ num }}</span>
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <a href="?page={{ num }}">{{ num }}</a>
+            {% endif %}
         {% endfor %}
-    </tbody>
-</table>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+        {% else %}
+        <span>Siguiente</span>
+        {% endif %}
+    </nav>
+    {% endif %}
+
 {% else %}
     <p>No tienes apuestas realizadas.</p>
     <a href="{% url 'evento_lista' %}" class="btn btn-primary">Ver eventos</a>
 {% endif %}
+
+<script>
+    function toggleDetalle(btn, panelId) {
+        var panel = document.getElementById(panelId);
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open');
+        btn.classList.toggle('active');
+        btn.textContent = isOpen ? 'Ver detalle' : 'Ocultar detalle';
+    }
+</script>
 {% endblock %}

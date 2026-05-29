@@ -18,6 +18,7 @@
                 {% endif %}
                 <a href="{% url 'mis_apuestas' %}">Mis Apuestas</a>
                 <a href="{% url 'wallet' %}">Wallet</a>
+                <a href="{% url 'autoexcluir' %}">Juego Responsable</a>
                 <form method="post" action="{% url 'logout' %}" style="display:inline">
                     {% csrf_token %}
                     <button type="submit" class="btn-link">Salir</button>
@@ -45,5 +46,206 @@
     <footer>
         <p>Plataforma educativa con moneda virtual. No constituye una casa de apuestas.</p>
     </footer>
+
+    <button class="bet-slip-float" id="betSlipFloat" onclick="abrirBoleto()">
+        Boleto <span class="bet-count" id="betCount">0</span>
+    </button>
+
+    <div class="bet-slip-overlay" id="betSlipOverlay">
+        <div class="bet-slip-panel">
+            <button class="bet-slip-close" onclick="cerrarBoleto()">&times;</button>
+            <h2>Boleto de Apuestas</h2>
+            <div id="betSlipContent"></div>
+        </div>
+    </div>
+
+    <script>
+        var BOLETO_KEY = 'fairbet_boleto';
+
+        function cargarBoleto() {
+            try { return JSON.parse(localStorage.getItem(BOLETO_KEY)) || []; }
+            catch(e) { return []; }
+        }
+
+        function guardarBoleto(lista) {
+            localStorage.setItem(BOLETO_KEY, JSON.stringify(lista));
+            actualizarFlotante();
+        }
+
+        function actualizarFlotante() {
+            var lista = cargarBoleto();
+            var btn = document.getElementById('betSlipFloat');
+            var count = document.getElementById('betCount');
+            if (lista.length > 0) {
+                btn.classList.add('visible');
+                count.textContent = lista.length;
+            } else {
+                btn.classList.remove('visible');
+            }
+        }
+
+        function agregarSeleccion(el) {
+            var id = parseInt(el.getAttribute('data-seleccion-id'));
+            var evento = el.getAttribute('data-evento');
+            var tipo = el.getAttribute('data-tipo');
+            var cuota = parseFloat(el.getAttribute('data-cuota'));
+
+            var lista = cargarBoleto();
+            var existe = lista.some(function(s) { return s.id === id; });
+            if (existe) return;
+
+            lista.push({ id: id, evento: evento, tipo: tipo, cuota: cuota });
+            guardarBoleto(lista);
+            el.classList.add('selected');
+        }
+
+        function quitarSeleccion(id) {
+            var lista = cargarBoleto().filter(function(s) { return s.id !== id; });
+            guardarBoleto(lista);
+            document.querySelectorAll('[data-seleccion-id="' + id + '"]').forEach(function(el) {
+                el.classList.remove('selected');
+            });
+            abrirBoleto();
+        }
+
+        function vaciarBoleto() {
+            document.querySelectorAll('.odd-option.selected').forEach(function(el) {
+                el.classList.remove('selected');
+            });
+            guardarBoleto([]);
+            abrirBoleto();
+        }
+
+        function abrirBoleto() {
+            var lista = cargarBoleto();
+            var overlay = document.getElementById('betSlipOverlay');
+            var content = document.getElementById('betSlipContent');
+
+            if (lista.length === 0) {
+                content.innerHTML = '<p class="bet-slip-empty">No hay selecciones en tu boleto.<br>Navega los eventos y haz clic en las cuotas para agregar.</p>';
+            } else {
+                var cuotaTotal = lista.reduce(function(acc, s) { return acc * s.cuota; }, 1).toFixed(2);
+                var html = '<ul class="bet-slip-list">';
+                lista.forEach(function(s) {
+                    html += '<li class="bet-slip-item">';
+                    html += '<div class="bet-slip-item-info">';
+                    html += '<div class="bet-slip-item-evento">' + escaparHTML(s.evento) + '</div>';
+                    html += '<div class="bet-slip-item-tipo">' + escaparHTML(s.tipo) + '</div>';
+                    html += '</div>';
+                    html += '<div class="bet-slip-item-cuota">' + s.cuota.toFixed(2) + '</div>';
+                    html += '<button class="bet-slip-remove" onclick="quitarSeleccion(' + s.id + ')" title="Quitar">&times;</button>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+                html += '<div class="bet-slip-summary">';
+                html += '<div class="bet-slip-cuota-row">';
+                html += '<span>Cuota combinada</span>';
+                html += '<strong>' + cuotaTotal + '</strong>';
+                html += '</div>';
+                html += '<button class="bet-slip-clear" onclick="vaciarBoleto()">Vaciar boleto</button>';
+                html += '</div>';
+                html += '<form class="bet-slip-form" onsubmit="return enviarBoleto(event)">';
+                html += '<input type="hidden" name="cuota_total" value="' + cuotaTotal + '">';
+                html += '<div class="form-group">';
+                html += '<label>Monto a apostar (S/ 1.00 - S/ 10,000.00)</label>';
+                html += '<input type="number" name="monto" id="betMonto" step="0.0001" min="1" max="10000" required placeholder="Ej: 100.00">';
+                html += '</div>';
+                html += '<div class="bet-slip-ganancia" id="betGanancia">Ganancia potencial: <strong>--</strong></div>';
+                html += '<div class="bet-slip-error" id="betError"></div>';
+                html += '<button type="submit" class="bet-slip-submit" id="betSubmit">Confirmar apuesta</button>';
+                html += '</form>';
+                content.innerHTML = html;
+
+                document.getElementById('betMonto').addEventListener('input', function() {
+                    var monto = parseFloat(this.value) || 0;
+                    var ganancia = (monto * parseFloat(cuotaTotal)).toFixed(2);
+                    document.getElementById('betGanancia').innerHTML = 'Ganancia potencial: <strong>S/ ' + ganancia + '</strong>';
+                });
+            }
+            overlay.classList.add('active');
+        }
+
+        function cerrarBoleto() {
+            document.getElementById('betSlipOverlay').classList.remove('active');
+        }
+
+        function enviarBoleto(e) {
+            e.preventDefault();
+            var lista = cargarBoleto();
+            var monto = document.getElementById('betMonto').value;
+            var errorDiv = document.getElementById('betError');
+            var submitBtn = document.getElementById('betSubmit');
+            errorDiv.classList.remove('visible');
+
+            if (lista.length === 0) {
+                errorDiv.textContent = 'No hay selecciones en tu boleto.';
+                errorDiv.classList.add('visible');
+                return false;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Procesando...';
+
+            var txId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); }));
+            var ids = lista.map(function(s) { return s.id; });
+
+            fetch('/apuestas/combinada/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    selecciones_ids: ids,
+                    monto: monto,
+                    transaction_id: txId
+                })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    guardarBoleto([]);
+                    window.location.href = data.redirect;
+                } else {
+                    errorDiv.textContent = data.error || 'Error al procesar la apuesta.';
+                    errorDiv.classList.add('visible');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Confirmar apuesta';
+                }
+            })
+            .catch(function() {
+                errorDiv.textContent = 'Error de conexion. Intenta de nuevo.';
+                errorDiv.classList.add('visible');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Confirmar apuesta';
+            });
+
+            return false;
+        }
+
+        function escaparHTML(str) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        document.getElementById('betSlipOverlay').addEventListener('click', function(e) {
+            if (e.target === this) cerrarBoleto();
+        });
+
+        actualizarFlotante();
+        marcarSeleccionadas();
+
+        function marcarSeleccionadas() {
+            var lista = cargarBoleto();
+            var ids = lista.map(function(s) { return s.id; });
+            document.querySelectorAll('[data-seleccion-id]').forEach(function(el) {
+                var sid = parseInt(el.getAttribute('data-seleccion-id'));
+                if (ids.indexOf(sid) !== -1) {
+                    el.classList.add('selected');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

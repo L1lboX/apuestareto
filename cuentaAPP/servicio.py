@@ -96,3 +96,29 @@ def liquidar_apuesta_perdida(apuesta, transaction_id):
             monto=monto_apostado,
             transaction_id=transaction_id
         )
+
+
+def void_apuesta(apuesta, transaction_id):
+    if LibroMayor.objects.filter(transaction_id=transaction_id).exists():
+        return
+
+    usuario = apuesta.usuario
+    monto = apuesta.monto_apostado
+
+    with transaction.atomic():
+        pendientes = Cuenta.objects.select_for_update().get(usuario=usuario, tipo_cuenta=Cuenta.TipoCuenta.APUESTAS_PENDIENTES)
+        wallet = Cuenta.objects.select_for_update().get(usuario=usuario, tipo_cuenta=Cuenta.TipoCuenta.WALLET_USUARIO)
+
+        LibroMayor.objects.create(
+            cuenta=pendientes,
+            tipo_movimiento=LibroMayor.TipoMovimiento.Debito,
+            monto=monto,
+            transaction_id=transaction_id
+        )
+
+        LibroMayor.objects.create(
+            cuenta=wallet,
+            tipo_movimiento=LibroMayor.TipoMovimiento.Credito,
+            monto=monto,
+            transaction_id=transaction_id
+        )
