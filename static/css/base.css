@@ -249,7 +249,7 @@ tr:nth-child(even) {
 
 .event-odds {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 1.25rem;
 }
 
@@ -265,6 +265,16 @@ tr:nth-child(even) {
     color: #7b8190;
     text-decoration: none;
     transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.odd-option.live {
+    border-color: #e94560;
+    animation: live-border 2s ease-in-out infinite;
+}
+
+@keyframes live-border {
+    0%, 100% { border-color: #e94560; box-shadow: 0 0 0 rgba(233, 69, 96, 0); }
+    50% { border-color: #ff6b81; box-shadow: 0 0 12px rgba(233, 69, 96, 0.25); }
 }
 
 .odd-option:hover {

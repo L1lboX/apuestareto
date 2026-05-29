@@ -61,13 +61,22 @@ def crear_apuesta(usuario, monto, selecciones_ids, transaction_id):
 
         for seleccion in selecciones:
             evento = seleccion.mercado.evento
-            if evento.estado != Evento.EstadoEvento.PROGRAMADO:
-                raise ValueError("El evento ya no está disponible para apostar.")
-            
-            if evento.fecha_inicio < timezone.now():
+            mercado = seleccion.mercado
+
+            if evento.estado not in [Evento.EstadoEvento.PROGRAMADO, Evento.EstadoEvento.EN_VIVO]:
+                raise ValueError("El evento ya no esta disponible para apostar.")
+
+            if evento.estado == Evento.EstadoEvento.PROGRAMADO and evento.fecha_inicio < timezone.now():
                 raise ValueError("El evento ya ha comenzado.")
 
-            cuota_total *= seleccion.cuota    
+            if not mercado.activo:
+                raise ValueError("Mercado no disponible.")
+
+            if mercado.esta_suspendido:
+                raise ValueError("Mercado temporalmente suspendido. Intenta en unos segundos.")
+
+            seleccion.refresh_from_db()
+            cuota_total *= seleccion.cuota
 
         # Llamar a bloquear_fondos de la Tarea 1
         bloquear_fondos(usuario, monto, transaction_id)

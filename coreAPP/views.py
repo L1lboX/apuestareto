@@ -2,21 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
-from django.db.models import Case, IntegerField, Prefetch, When
+from django.db.models import Prefetch
 from eventoAPP.models import Evento, Mercado, Seleccion
 from .forms import RegistroForm
 
 
 def home(request):
-    selecciones_ordenadas = Seleccion.objects.order_by(
-        Case(
-            When(tipo=Seleccion.TipoSeleccion.GANA_LOCAL, then=0),
-            When(tipo=Seleccion.TipoSeleccion.EMPATE, then=1),
-            When(tipo=Seleccion.TipoSeleccion.GANA_VISITANTE, then=2),
-            default=3,
-            output_field=IntegerField(),
-        )
-    )
+    selecciones_ordenadas = Seleccion.objects.order_by('tipo')
     mercados_activos = Mercado.objects.filter(activo=True).prefetch_related(
         Prefetch('selecciones', queryset=selecciones_ordenadas, to_attr='selecciones_ordenadas')
     )

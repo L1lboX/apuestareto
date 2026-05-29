@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from apuestaAPP.models import ApuestaMaestra, ApuestaDetalle
-from eventoAPP.models import Evento, Seleccion
+from eventoAPP.models import Evento, Mercado, Seleccion
 from cuentaAPP.servicio import liquidar_apuesta_ganada, liquidar_apuesta_perdida, void_apuesta
 from userAPP.models import User
 from .models import AuditoriaRegistro, ActividadSospechosa
@@ -261,22 +261,31 @@ def vista_usuario_apuestas(request, usuario_id):
 # ---------- NEW VIEWS ----------
 
 @user_passes_test(is_staff)
+@user_passes_test(is_staff)
 def crear_evento(request):
     if request.method == 'POST':
         evento_form = EventoForm(request.POST)
-        cuota_1 = request.POST.get('cuota_1', '').strip()
-        cuota_X = request.POST.get('cuota_X', '').strip()
-        cuota_2 = request.POST.get('cuota_2', '').strip()
-        cuotas_ok = all(cuota_1 and cuota_X and cuota_2)
-        if not cuotas_ok:
-            messages.error(request, 'Debe ingresar las tres cuotas (1, X, 2).')
-        if evento_form.is_valid() and cuotas_ok:
+        tipo_mercado = request.POST.get('tipo_mercado', '').strip()
+
+        selecciones_ok = True
+        cuotas_data = []
+        tipo_map = dict(Mercado.SELECCIONES_POR_MERCADO.get(tipo_mercado, []))
+
+        for key in tipo_map.keys():
+            cuota_val = request.POST.get(f'cuota_{key}', '').strip()
+            if not cuota_val:
+                selecciones_ok = False
+                break
+            cuotas_data.append((key, cuota_val))
+
+        if not selecciones_ok:
+            messages.error(request, 'Debe ingresar todas las cuotas.')
+
+        if evento_form.is_valid() and selecciones_ok:
             evento = evento_form.save(commit=False)
             evento.save()
-            from eventoAPP.models import Mercado, Seleccion
-            mercado = Mercado.objects.create(evento=evento, tipo=Mercado.TipoMercado.RESULTADO_FINAL)
-            cuotas = {'1': cuota_1, 'X': cuota_X, '2': cuota_2}
-            for tipo, cuota in cuotas.items():
+            mercado = Mercado.objects.create(evento=evento, tipo=tipo_mercado)
+            for tipo, cuota in cuotas_data:
                 Seleccion.objects.create(mercado=mercado, tipo=tipo, cuota=cuota)
             messages.success(request, 'Evento creado correctamente')
             return redirect('admin_dashboard:eventos_control')
@@ -353,6 +362,32 @@ def actualizar_estado(request, evento_id):
                         messages.success(request, f'Estado del evento actualizado a {evento.get_estado_display()}.')
                 else:
                     messages.success(request, f'Estado del evento actualizado a {evento.get_estado_display()}.')
+    return redirect('admin_dashboard:eventos_control')
+
+
+@user_passes_test(is_staff)
+def suspender_mercado(request, mercado_id):
+    mercado = get_object_or_404(Mercado, id=mercado_id)
+    if request.method == 'POST':
+        duracion = int(request.POST.get('duracion', 30))
+        mercado.suspension_hasta = timezone.now() + timezone.timedelta(seconds=duracion)
+        mercado.save()
+        messages.warning(request, f'Mercado suspendido por {duracion}s.')
+    return redirect('admin_dashboard:eventos_control')
+
+
+@user_passes_test(is_staff)
+def ajustar_cuota(request, seleccion_id):
+    seleccion = get_object_or_404(Seleccion, id=seleccion_id)
+    if request.method == 'POST':
+        delta = Decimal(request.POST.get('delta', '0'))
+        nueva = seleccion.cuota + delta
+        if nueva < Decimal('1.01'):
+            messages.error(request, 'La cuota minima es 1.01.')
+        else:
+            seleccion.cuota = nueva
+            seleccion.save()
+            messages.success(request, f'Cuota de {seleccion.get_tipo_display()} ajustada a {nueva}.')
     return redirect('admin_dashboard:eventos_control')
 
 

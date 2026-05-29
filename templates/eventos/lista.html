@@ -36,10 +36,21 @@
                 <span class="event-status-badge event-status-{{ evento.estado }}">
                     {{ evento.get_estado_display }}
                 </span>
+
+                {% if mercado.esta_suspendido %}
                 <div class="event-odds">
                     {% for seleccion in mercado.selecciones_ordenadas %}
-                    {% if evento.estado == 'programado' %}
-                    <a href="{% url 'hacer_apuesta' seleccion_id=seleccion.id %}" class="odd-option"
+                    <span class="odd-option disabled" title="Mercado temporalmente suspendido">
+                        <span>{{ seleccion.get_tipo_display }}</span>
+                        <strong>{{ seleccion.cuota }}</strong>
+                    </span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="event-odds">
+                    {% for seleccion in mercado.selecciones_ordenadas %}
+                    {% if evento.estado == 'programado' or evento.estado == 'en_vivo' %}
+                    <a href="{% url 'hacer_apuesta' seleccion_id=seleccion.id %}" class="odd-option{% if evento.estado == 'en_vivo' %} live{% endif %}"
                        onclick="agregarSeleccion(this); return false;"
                        data-seleccion-id="{{ seleccion.id }}"
                        data-evento="{{ evento.local }} vs {{ evento.visitante }}"
@@ -56,6 +67,7 @@
                     {% endif %}
                     {% endfor %}
                 </div>
+                {% endif %}
                 {% else %}
                 <div class="event-empty-odds">
                     <span>Sin cuotas disponibles</span>

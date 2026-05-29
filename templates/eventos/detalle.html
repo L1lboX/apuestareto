@@ -23,15 +23,21 @@
                     <td>{{ sel.get_tipo_display }}</td>
                     <td>{{ sel.cuota }}</td>
                     <td>
-                        {% if evento.estado == 'programado' %}
-                        <a href="{% url 'hacer_apuesta' seleccion_id=sel.id %}" class="btn btn-primary"
-                           onclick="agregarSeleccion(this); return false;"
-                           data-seleccion-id="{{ sel.id }}"
-                           data-evento="{{ evento.local }} vs {{ evento.visitante }}"
-                           data-tipo="{{ sel.get_tipo_display }}"
-                           data-cuota="{{ sel.cuota }}">
-                            Apostar
-                        </a>
+                        {% if evento.estado == 'programado' or evento.estado == 'en_vivo' %}
+                            {% with merc=sel.mercado %}
+                            {% if merc.esta_suspendido %}
+                            <span class="btn btn-primary disabled">Suspendido</span>
+                            {% else %}
+                            <a href="{% url 'hacer_apuesta' seleccion_id=sel.id %}" class="btn btn-primary"
+                               onclick="agregarSeleccion(this); return false;"
+                               data-seleccion-id="{{ sel.id }}"
+                               data-evento="{{ evento.local }} vs {{ evento.visitante }}"
+                               data-tipo="{{ sel.get_tipo_display }}"
+                               data-cuota="{{ sel.cuota }}">
+                                Apostar
+                            </a>
+                            {% endif %}
+                            {% endwith %}
                         {% else %}
                         <span class="btn btn-primary disabled">No disponible</span>
                         {% endif %}

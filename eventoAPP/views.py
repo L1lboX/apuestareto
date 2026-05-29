@@ -1,4 +1,4 @@
-from django.db.models import Case, IntegerField, Prefetch, When
+from django.db.models import Prefetch
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -6,15 +6,7 @@ from .models import Evento, Mercado, Seleccion
 
 
 def evento_lista(request):
-    selecciones_ordenadas = Seleccion.objects.order_by(
-        Case(
-            When(tipo=Seleccion.TipoSeleccion.GANA_LOCAL, then=0),
-            When(tipo=Seleccion.TipoSeleccion.EMPATE, then=1),
-            When(tipo=Seleccion.TipoSeleccion.GANA_VISITANTE, then=2),
-            default=3,
-            output_field=IntegerField(),
-        )
-    )
+    selecciones_ordenadas = Seleccion.objects.order_by('tipo')
     mercados_activos = Mercado.objects.filter(activo=True).prefetch_related(
         Prefetch('selecciones', queryset=selecciones_ordenadas, to_attr='selecciones_ordenadas')
     )
